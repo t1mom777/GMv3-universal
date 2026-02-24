@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "build:export": "next build",
-    "deploy:voice-client": "mkdir -p ../docs/voice_client && cp -r out/. ../docs/voice_client/",
+    "deploy:voice-client": "node -e \"const fs=require('fs');const path=require('path');const src=path.resolve('out');const dst=path.resolve('..','docs','voice_client');fs.rmSync(dst,{recursive:true,force:true});fs.mkdirSync(dst,{recursive:true});fs.cpSync(src,dst,{recursive:true,force:true});\"",
     "start": "next start",
     "lint": "eslint"
   },

@@ -60,7 +60,7 @@ Windows (PowerShell):
 ```
 
 ## 🤝 Need Help?
-Feel free to contact me through GitHub Issues if you want help installing and setting up the app for your campaign. I can help you get from download to first playable session.
+Feel free to contact me through GitHub Issues if you want help installing and setting up the app for your campaign. I can install and set it up for you, and help you get from download to first playable session.
 
 ## Deliverable contents
 Each generated package includes:
