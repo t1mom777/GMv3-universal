@@ -187,21 +187,98 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         """\
         #!/usr/bin/env bash
         set -euo pipefail
+
         SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        TARGET_DIR="${HOME}/.local/GMv3Pro"
+        DEFAULT_TARGET="${HOME}/.local/GMv3Pro"
+        TARGET_DIR="${DEFAULT_TARGET}"
+
+        if [[ -t 0 ]]; then
+          echo "GMv3 Pro first-time installer (Linux/macOS)"
+          echo "Default install path: ${DEFAULT_TARGET}"
+          read -r -p "Install path (press Enter for default): " INPUT_TARGET
+          if [[ -n "${INPUT_TARGET:-}" ]]; then
+            TARGET_DIR="${INPUT_TARGET}"
+          fi
+        fi
+
         mkdir -p "$TARGET_DIR"
         cp -a "$SRC_DIR/app" "$TARGET_DIR/"
         cp -a "$SRC_DIR/.env.example" "$TARGET_DIR/"
         cp -a "$SRC_DIR/run.sh" "$TARGET_DIR/"
         chmod +x "$TARGET_DIR/run.sh"
+
+        ENV_PATH="$TARGET_DIR/.env"
+        if [[ ! -f "$ENV_PATH" ]]; then
+          cp "$TARGET_DIR/.env.example" "$ENV_PATH"
+        fi
+
+        set_env_value() {
+          local key="$1"
+          local val="$2"
+          local file="$3"
+          local tmp
+          tmp="$(mktemp)"
+          awk -v k="$key" -v v="$val" '
+            BEGIN { done=0 }
+            $0 ~ ("^" k "=") { print k "=" v; done=1; next }
+            { print }
+            END { if (!done) print k "=" v }
+          ' "$file" > "$tmp"
+          mv "$tmp" "$file"
+        }
+
+        AUTH_MODE="openai"
+        if [[ -t 0 ]]; then
+          echo
+          echo "Choose LLM auth mode:"
+          echo "  1) OpenAI API key (GM_LLM_PROVIDER=openai)"
+          echo "  2) ChatGPT Codex login (GM_LLM_PROVIDER=codex_chatgpt)"
+          read -r -p "Select [1/2] (default 1): " AUTH_CHOICE
+          if [[ "${AUTH_CHOICE:-1}" == "2" ]]; then
+            AUTH_MODE="codex_chatgpt"
+          fi
+        fi
+        set_env_value "GM_LLM_PROVIDER" "$AUTH_MODE" "$ENV_PATH"
+
+        if [[ -t 0 ]]; then
+          echo
+          if [[ "$AUTH_MODE" == "openai" ]]; then
+            echo "Set OPENAI_API_KEY in: $ENV_PATH"
+          else
+            echo "Run 'codex login' and keep GM_LLM_PROVIDER=codex_chatgpt in: $ENV_PATH"
+          fi
+          read -r -p "Open .env now? [Y/n]: " OPEN_ENV
+          if [[ -z "${OPEN_ENV:-}" || "${OPEN_ENV,,}" == "y" || "${OPEN_ENV,,}" == "yes" ]]; then
+            if [[ -n "${EDITOR:-}" ]] && command -v "${EDITOR%% *}" >/dev/null 2>&1; then
+              "${EDITOR%% *}" "$ENV_PATH" || true
+            elif command -v nano >/dev/null 2>&1; then
+              nano "$ENV_PATH"
+            elif command -v vi >/dev/null 2>&1; then
+              vi "$ENV_PATH"
+            else
+              echo "No terminal editor found. Edit manually: $ENV_PATH"
+            fi
+          fi
+        fi
+
         cat <<MSG
         Installed to: $TARGET_DIR
-        Next:
-          cd $TARGET_DIR
-          cp .env.example .env
-          # set API keys in .env
-          ./run.sh
+
+        Next steps:
+          1) cd "$TARGET_DIR"
+          2) Review .env and add provider keys
+          3) Start server: ./run.sh
+          4) Open: http://localhost:8000
         MSG
+
+        if [[ -t 0 ]]; then
+          echo
+          read -r -p "Start now? [y/N]: " START_NOW
+          if [[ "${START_NOW:-n}" == "y" || "${START_NOW:-n}" == "Y" ]]; then
+            cd "$TARGET_DIR"
+            exec ./run.sh
+          fi
+        fi
         """
     )
     _write_text(pkg_dir / "install.sh", install_sh)
@@ -225,13 +302,88 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         """\
         $ErrorActionPreference = "Stop"
         $src = Split-Path -Parent $MyInvocation.MyCommand.Path
-        $target = Join-Path $env:USERPROFILE "GMv3Pro"
+        $defaultTarget = Join-Path $env:USERPROFILE "GMv3Pro"
+        $target = $defaultTarget
+
+        Write-Host "GMv3 Pro first-time installer (Windows)"
+        Write-Host "Default install path: $defaultTarget"
+        $inputTarget = Read-Host "Install path (press Enter for default)"
+        if (-not [string]::IsNullOrWhiteSpace($inputTarget)) {
+          $target = $inputTarget.Trim()
+        }
+
         New-Item -ItemType Directory -Force -Path $target | Out-Null
         Copy-Item -Recurse -Force (Join-Path $src "app") $target
         Copy-Item -Force (Join-Path $src ".env.example") $target
         Copy-Item -Force (Join-Path $src "run.bat") $target
+
+        $envPath = Join-Path $target ".env"
+        if (-not (Test-Path $envPath)) {
+          Copy-Item -Force (Join-Path $target ".env.example") $envPath
+        }
+
+        function Set-EnvValue {
+          param(
+            [string]$Path,
+            [string]$Key,
+            [string]$Value
+          )
+          $lines = @()
+          if (Test-Path $Path) {
+            $lines = Get-Content -Path $Path
+          }
+          $prefix = [regex]::Escape($Key) + "="
+          $found = $false
+          for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match "^$prefix") {
+              $lines[$i] = "$Key=$Value"
+              $found = $true
+            }
+          }
+          if (-not $found) {
+            $lines += "$Key=$Value"
+          }
+          Set-Content -Path $Path -Value $lines -Encoding UTF8
+        }
+
+        Write-Host ""
+        Write-Host "Choose LLM auth mode:"
+        Write-Host "  1) OpenAI API key (GM_LLM_PROVIDER=openai)"
+        Write-Host "  2) ChatGPT Codex login (GM_LLM_PROVIDER=codex_chatgpt)"
+        $authChoice = Read-Host "Select [1/2] (default 1)"
+        $authMode = "openai"
+        if ($authChoice -eq "2") {
+          $authMode = "codex_chatgpt"
+        }
+        Set-EnvValue -Path $envPath -Key "GM_LLM_PROVIDER" -Value $authMode
+
+        Write-Host ""
+        if ($authMode -eq "openai") {
+          Write-Host "Set OPENAI_API_KEY in: $envPath"
+        } else {
+          Write-Host "Run 'codex login' and keep GM_LLM_PROVIDER=codex_chatgpt in: $envPath"
+        }
+        $openEnv = Read-Host "Open .env in Notepad now? [Y/n]"
+        if (
+          [string]::IsNullOrWhiteSpace($openEnv) -or
+          $openEnv.Trim().ToLower() -eq "y" -or
+          $openEnv.Trim().ToLower() -eq "yes"
+        ) {
+          notepad $envPath
+        }
+
+        Write-Host ""
         Write-Host "Installed to: $target"
-        Write-Host "Next: copy .env.example to .env, set keys, then run run.bat"
+        Write-Host "Next steps:"
+        Write-Host "  1) Review .env and add provider keys"
+        Write-Host "  2) Start server: .\\run.bat"
+        Write-Host "  3) Open: http://localhost:8000"
+
+        $startNow = Read-Host "Start now? [y/N]"
+        if (-not [string]::IsNullOrWhiteSpace($startNow) -and $startNow.Trim().ToLower() -eq "y") {
+          Set-Location $target
+          & .\run.bat
+        }
         """
     )
     _write_text(pkg_dir / "install.ps1", install_ps1)
@@ -242,20 +394,34 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
 
         This package is a compiled distribution.
 
-        ## Quick start
-        Linux/macOS:
+        ## LLM auth modes (alternative)
+        - OpenAI API mode: `GM_LLM_PROVIDER=openai` + `OPENAI_API_KEY=...`
+        - ChatGPT Codex mode: `GM_LLM_PROVIDER=codex_chatgpt` + `codex login`
+
+        ## First install
+        Linux/macOS (guided):
         ```bash
         ./install.sh
-        # or portable:
-        ./run.sh
         ```
 
-        Windows:
-        - Run `install.ps1` in PowerShell
-        - Or run portable: `run.bat`
+        Windows (guided):
+        - Run `install.ps1` in PowerShell.
+
+        The installer guides you through:
+        - install location
+        - `.env` creation
+        - auth mode selection
+        - optional immediate launch
+        - final localhost URL (`http://localhost:8000`)
+
+        Next launches:
+        - Linux/macOS: `./run.sh`
+        - Windows: `run.bat`
 
         ## Required
-        - `OPENAI_API_KEY` OR ChatGPT login fallback (`codex login`, set `GM_LLM_PROVIDER=codex_chatgpt`)
+        - Choose one LLM auth mode:
+          - OpenAI API (`OPENAI_API_KEY`)
+          - ChatGPT Codex (`codex login` + `GM_LLM_PROVIDER=codex_chatgpt`)
 
         Optional:
         - `DEEPGRAM_API_KEY`

@@ -65,7 +65,7 @@ def _render(version: str, checksums: list[tuple[str, str]]) -> str:
     lines.append("- VAD turn detection + multilingual real-time voice pipeline.")
     lines.append("- Multi-player voice/speaker detection flow with persistent player profiles.")
     lines.append("- RLM + LLM + Qdrant retrieval stack for rulebook-grounded gameplay.")
-    lines.append("- ChatGPT account fallback for LLM turns (`GM_LLM_PROVIDER=codex_chatgpt` + `codex login`).")
+    lines.append("- OpenAI API and ChatGPT Codex are alternative LLM auth modes (`GM_LLM_PROVIDER=openai|codex_chatgpt`).")
     lines.append("")
     lines.append("## Notes")
     lines.append("- STT/TTS providers still require their own credentials.")

@@ -23,19 +23,20 @@ This repository builds universal binary distributions for:
 - ⚙️ Tech stack: **RLM + LLM + Qdrant** with real-time voice.
 - 🔌 Voice/AI options: **OpenAI**, **Deepgram**, **ElevenLabs (11Labs)**.
 
-## ChatGPT account fallback (no API key)
-This app now supports an LLM fallback using a local ChatGPT-authenticated Codex session:
-- Set `GM_LLM_PROVIDER=codex_chatgpt`
-- Run `codex login` on the target machine
-- If `OPENAI_API_KEY` is absent, the app can use `codex exec` for LLM turns
+## LLM Authentication Options (Alternative Modes)
+For **LLM turns**, you can use either mode:
+- **OpenAI API mode**: set `GM_LLM_PROVIDER=openai` and `OPENAI_API_KEY=...`
+- **ChatGPT Codex mode**: set `GM_LLM_PROVIDER=codex_chatgpt` and run `codex login`
 
 Notes:
-- This fallback is for **LLM** turns.
-- STT/TTS still need their own credentials/providers (e.g., Deepgram/ElevenLabs/OpenAI).
+- OpenAI and Codex ChatGPT are alternatives, not backup-only behavior.
+- STT/TTS still use their own provider credentials (Deepgram / ElevenLabs / OpenAI).
 
 ## Install (Linux / Windows / macOS)
 Download from the latest release:
 `https://github.com/t1mom777/GMv3-universal/releases/latest`
+
+All packaged installers are **guided first-run scripts**: they install files, create `.env`, prompt for auth mode, and print final localhost launch instructions.
 
 Linux (x64):
 1. Download `GMv3Pro-linux-x64-<version>.tar.gz` (or `.zip`) from the release page.
@@ -53,13 +54,16 @@ cd GMv3Pro-linux-x64-<version>
 ```bash
 cp .env.example .env
 ```
-5. Run setup/start:
+5. Run guided setup:
 ```bash
 ./install.sh
-# next launches can use:
+```
+6. Follow prompts (auth mode, `.env` editing, optional immediate launch).
+7. Open the URL shown in terminal (usually `http://localhost:8000`).
+8. Next launches can use:
+```bash
 ./run.sh
 ```
-6. Open the URL shown in terminal (usually `http://localhost:8000`).
 
 macOS (Apple Silicon / arm64):
 1. Download `GMv3Pro-macos-arm64-<version>.tar.gz` (or `.zip`) from the release page.
@@ -77,95 +81,49 @@ cd GMv3Pro-macos-arm64-<version>
 ```bash
 cp .env.example .env
 ```
-5. Run setup/start:
+5. Run guided setup:
 ```bash
 chmod +x install.sh run.sh
 ./install.sh
-# next launches can use:
+```
+6. Follow prompts (auth mode, `.env` editing, optional immediate launch).
+7. Open the URL shown in terminal (usually `http://localhost:8000`).
+8. Next launches can use:
+```bash
 ./run.sh
 ```
-6. Open the URL shown in terminal (usually `http://localhost:8000`).
 
-## Windows (x64) — Installation via File Explorer
-
----
-
-### 1. Download the Release
-1. Go to the project's **Releases** page on GitHub.
-2. Download:  
-   `GMv3Pro-windows-x64-<version>.zip`
----
-
-### 2. Extract the ZIP File
-1. Open **File Explorer**.
-2. Navigate to your downloaded `.zip` file.
-3. Right-click the file → select **Extract All…**
-4. Choose a destination folder (or keep the default).
-5. Click **Extract**.
-
-This will create a new folder named:
-
-GMv3Pro-windows-x64-<version>
-
----
-
-### 3. Create the `.env` File
-1. Open the extracted folder.
-2. Locate the file:
-
-.env.example
-
-3. Right-click → **Copy**
-4. Right-click empty space in the folder → **Paste**
-5. Rename the copied file to:
-
-.env
-
-> If Windows warns about changing the file extension, click **Yes**.
-
-6. Right-click `.env` → **Open with → Notepad**
-7. Add your required API keys and configuration values.
-8. Click **File → Save**, then close Notepad.
-
----
-
-### 4. Run Initial Setup
-
-1. In the same folder, locate:
-
-install.ps1
-
-2. Right-click → **Run with PowerShell**
-3. If prompted for permission, allow it.
-4. Wait until the installation completes.
-
----
-
-### 5. Start the Application
-
-After installation:
-1. Double-click:
-
-run.bat
-
-A terminal window will open and display a local URL.
-
----
-
-### 6. Open in Browser
-Open your browser and navigate to:
-
-http://localhost:8000
-
-(If a different URL is shown in the terminal, use that instead.)
-
----
-
-## ✅ Done
-
-The application should now be running locally on your Windows machine.
+Windows (x64, PowerShell):
+1. Download `GMv3Pro-windows-x64-<version>.zip` from the release page.
+2. Extract and enter folder:
+```powershell
+Expand-Archive -Path .\GMv3Pro-windows-x64-<version>.zip -DestinationPath .
+Set-Location .\GMv3Pro-windows-x64-<version>
 ```
-5. Open the URL shown in terminal (usually `http://localhost:8000`).
+3. Create env file and add keys:
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+4. Run guided setup:
+```powershell
+.\install.ps1
+```
+5. Follow prompts (auth mode, `.env` editing, optional immediate launch).
+6. Open the URL shown in terminal (usually `http://localhost:8000`).
+7. Next launches can use:
+```powershell
+.\run.bat
+```
+
+Windows (x64, File Explorer click-through):
+1. Download `GMv3Pro-windows-x64-<version>.zip`.
+2. Right-click ZIP -> **Extract All...**.
+3. Open extracted folder `GMv3Pro-windows-x64-<version>`.
+4. Copy `.env.example` to `.env`, then edit `.env` in Notepad.
+5. Right-click `install.ps1` -> **Run with PowerShell** and follow prompts.
+6. Start with `run.bat`.
+7. Open `http://localhost:8000` (or URL printed in terminal).
 
 ## 🤝 Need Help?
 Feel free to contact me through GitHub Issues if you want help installing and setting up the app for your campaign. I can install and set it up for you, and help you get from download to first playable session.
@@ -180,7 +138,9 @@ Each generated package includes:
 
 ## Runtime config
 Required in `.env`:
-- `OPENAI_API_KEY` OR ChatGPT fallback (`GM_LLM_PROVIDER=codex_chatgpt` + `codex login`)
+- Choose one LLM auth mode:
+  - OpenAI API: `GM_LLM_PROVIDER=openai` + `OPENAI_API_KEY=...`
+  - ChatGPT Codex: `GM_LLM_PROVIDER=codex_chatgpt` + `codex login`
 
 Optional:
 - `DEEPGRAM_API_KEY`
