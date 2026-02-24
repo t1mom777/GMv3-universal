@@ -16,8 +16,9 @@ This repository builds universal binary distributions for:
 - 🚀 One setup flow: upload rulebook, choose voices/providers, play.
 - 🗣️ Real-time GM voice + chat with interruption handling.
 - 🎧 VAD-driven hands-free turns with natural barge-in interruption.
-- 👥 Multi-player voice detection (speaker diarization / voiceprint-ready flow, up to 8 players).
+- 👥 Automatic player switching while people speak (voice-based speaker recognition with diarization + voiceprint flow, up to 8 players).
 - 🌍 Automatic language handling for multilingual sessions.
+- 🧠 Large persistent memory layers: per-player history/skills/context, per-turn logs, per-campaign state, and world continuity.
 - 💻 Works across Linux, Windows, and macOS with release installers.
 - ⚙️ Tech stack: **RLM + LLM + Qdrant** with real-time voice.
 - 🔌 Voice/AI options: **OpenAI**, **Deepgram**, **ElevenLabs (11Labs)**.
@@ -33,31 +34,77 @@ Notes:
 - STT/TTS still need their own credentials/providers (e.g., Deepgram/ElevenLabs/OpenAI).
 
 ## Install (Linux / Windows / macOS)
-1. Open the latest GitHub Release and download the archive for your OS.
-2. Extract the archive.
-3. Create `.env` from `.env.example`, then set your provider keys.
+Download from the latest release:
+`https://github.com/t1mom777/GMv3-universal/releases/latest`
 
-Linux:
+Linux (x64):
+1. Download `GMv3Pro-linux-x64-<version>.tar.gz` (or `.zip`) from the release page.
+2. Extract it:
+```bash
+tar -xzf GMv3Pro-linux-x64-<version>.tar.gz
+# or:
+unzip GMv3Pro-linux-x64-<version>.zip
+```
+3. Enter the extracted folder:
+```bash
+cd GMv3Pro-linux-x64-<version>
+```
+4. Create env file and add keys:
+```bash
+cp .env.example .env
+```
+5. Run setup/start:
 ```bash
 ./install.sh
-# or portable run from extracted folder:
+# next launches can use:
 ./run.sh
 ```
+6. Open the URL shown in terminal (usually `http://localhost:8000`).
 
-macOS:
+macOS (Apple Silicon / arm64):
+1. Download `GMv3Pro-macos-arm64-<version>.tar.gz` (or `.zip`) from the release page.
+2. Extract it:
+```bash
+tar -xzf GMv3Pro-macos-arm64-<version>.tar.gz
+# or:
+unzip GMv3Pro-macos-arm64-<version>.zip
+```
+3. Enter the extracted folder:
+```bash
+cd GMv3Pro-macos-arm64-<version>
+```
+4. Create env file and add keys:
+```bash
+cp .env.example .env
+```
+5. Run setup/start:
 ```bash
 chmod +x install.sh run.sh
 ./install.sh
-# or portable:
+# next launches can use:
 ./run.sh
 ```
+6. Open the URL shown in terminal (usually `http://localhost:8000`).
 
-Windows (PowerShell):
+Windows (x64, PowerShell):
+1. Download `GMv3Pro-windows-x64-<version>.zip` from the release page.
+2. Extract and enter folder:
+```powershell
+Expand-Archive -Path .\GMv3Pro-windows-x64-<version>.zip -DestinationPath .
+Set-Location .\GMv3Pro-windows-x64-<version>
+```
+3. Create env file and add keys:
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+4. Run setup/start:
 ```powershell
 .\install.ps1
-# or portable run from extracted folder:
+# next launches can use:
 .\run.bat
 ```
+5. Open the URL shown in terminal (usually `http://localhost:8000`).
 
 ## 🤝 Need Help?
 Feel free to contact me through GitHub Issues if you want help installing and setting up the app for your campaign. I can install and set it up for you, and help you get from download to first playable session.
