@@ -69,24 +69,6 @@ Ways to trigger:
 - Push a tag like `v3.0.0`
 - Or run `workflow_dispatch` and provide `version` (for example `v3.0.0`)
 
-## Publish this repo to GitHub
-Non-interactive publisher script:
-- `scripts/publish_to_github.sh`
-
-Required environment variables:
-- `GITHUB_TOKEN` (repo scope)
-- `GITHUB_OWNER` (example: `your-user`)
-- `GITHUB_REPO` (example: `GMv3-proprietary-universal`)
-
-Optional:
-- `GITHUB_PRIVATE=true|false` (default: `true`)
-
-Run:
-```bash
-chmod +x scripts/publish_to_github.sh
-GITHUB_TOKEN=... GITHUB_OWNER=... GITHUB_REPO=... ./scripts/publish_to_github.sh
-```
-
 ## Deliverable contents
 Each generated package includes:
 - Compiled app binary (`app/GMv3Server` / `app/GMv3Server.exe`)
