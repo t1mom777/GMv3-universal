@@ -17,7 +17,7 @@ This repository builds universal binary distributions for:
 - 🗣️ Real-time GM voice + chat with interruption handling.
 - 🎧 VAD-driven hands-free turns with natural barge-in interruption.
 - 👥 Automatic player switching while people speak (voice-based speaker recognition with diarization + voiceprint flow, up to 8 players).
-- 🌍 Automatic language handling for multilingual sessions.
+- 🌍 Automatic language switching in live play: the GM detects speaker language and responds in that language.
 - 🧠 Large persistent memory layers: per-player history/skills/context, per-turn logs, per-campaign state, and world continuity.
 - 💻 Works across Linux, Windows, and macOS with release installers.
 - ⚙️ Tech stack: **RLM + LLM + Qdrant** with real-time voice.
