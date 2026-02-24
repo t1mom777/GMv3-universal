@@ -1,0 +1,36 @@
+[project]
+name = "voice-game-master"
+version = "0.1.0"
+description = "Pipecat + Recursive Language Model Voice Game Master"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.6",
+  "sqlalchemy>=2.0",
+  "aiosqlite>=0.20",
+  "rich>=13.7",
+  "alembic>=1.11",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4", "mypy>=1.8"]
+# Vector DB + PDF ingestion. (Embeddings are a separate extra to avoid pulling in torch by default.)
+knowledge = ["qdrant-client>=1.7", "pypdf>=4.0"]
+# Heavy dependency set (brings in torch). Keep this opt-in.
+embeddings = ["sentence-transformers>=2.6", "numpy>=1.26"]
+# Voice runtime (Pipecat + LLM provider + env loading)
+# Note: pipecat-ai (and its numba dependency) does not yet support CPython 3.14.
+voice = [
+  "pipecat-ai[websocket,deepgram,elevenlabs]==0.0.103; python_version < '3.14'",
+  "openai>=2.21.0",
+  "python-dotenv>=1.0",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gm_engine*"]

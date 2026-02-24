@@ -1,0 +1,59 @@
+name: Build Proprietary Universal
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'gm_engine/**'
+      - 'scripts/**'
+      - 'ui-next/**'
+      - 'docs/voice_client/**'
+      - '.github/workflows/build-proprietary-universal.yml'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ui-next/package-lock.json
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[voice,knowledge]' pyinstaller
+
+      - name: Install UI deps
+        run: npm --prefix ui-next ci
+
+      - name: Build UI
+        run: npm --prefix ui-next run build
+
+      - name: Deploy static voice client
+        run: npm --prefix ui-next run deploy:voice-client
+
+      - name: Build proprietary package
+        run: python scripts/build_proprietary_package.py --output proprietary-dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: GMv3Pro-${{ matrix.os }}
+          path: proprietary-dist/*

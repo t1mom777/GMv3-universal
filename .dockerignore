@@ -1,0 +1,17 @@
+.git
+.gitignore
+.pytest_cache
+__pycache__/
+*.py[cod]
+*.so
+.Python
+.env
+.env.*
+.venv/
+.venv-voice/
+venv/
+node_modules/
+.vscode/
+.idea/
+data/
+ChatExport_2026-02-20/

@@ -1,0 +1,178 @@
+name: Release Proprietary Universal
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag/version (example: v3.0.0)"
+        required: true
+        default: "v3.0.0"
+      prerelease:
+        description: "Publish as prerelease"
+        required: false
+        type: boolean
+        default: false
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.vars.outputs.version }}
+      stamp: ${{ steps.vars.outputs.stamp }}
+      prerelease: ${{ steps.vars.outputs.prerelease }}
+    steps:
+      - name: Resolve release variables
+        id: vars
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            PRERELEASE="${{ github.event.inputs.prerelease }}"
+          else
+            VERSION="${GITHUB_REF_NAME}"
+            PRERELEASE="false"
+          fi
+
+          VERSION="${VERSION#refs/tags/}"
+          if [[ -z "$VERSION" ]]; then
+            echo "version is empty" >&2
+            exit 1
+          fi
+
+          STAMP="${VERSION#v}"
+          STAMP="${STAMP//[^A-Za-z0-9._-]/-}"
+          if [[ -z "$STAMP" ]]; then
+            echo "stamp is empty" >&2
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "stamp=$STAMP" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: resolve
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ui-next/package-lock.json
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[voice,knowledge]' pyinstaller
+
+      - name: Install UI deps
+        run: npm --prefix ui-next ci
+
+      - name: Build UI
+        run: npm --prefix ui-next run build
+
+      - name: Deploy static voice client
+        run: npm --prefix ui-next run deploy:voice-client
+
+      - name: Build proprietary package
+        run: python scripts/build_proprietary_package.py --output proprietary-dist --stamp "${{ needs.resolve.outputs.stamp }}"
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+
+          root = Path("proprietary-dist")
+          files = []
+          for p in sorted(root.glob("*")):
+              if not p.is_file():
+                  continue
+              if p.suffix == ".zip" or p.name.endswith(".tar.gz"):
+                  files.append(p)
+
+          lines = []
+          for p in files:
+              h = hashlib.sha256()
+              with p.open("rb") as f:
+                  for chunk in iter(lambda: f.read(1024 * 1024), b""):
+                      h.update(chunk)
+              lines.append(f"{h.hexdigest()}  {p.name}")
+
+          out = root / "SHA256SUMS.txt"
+          out.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+          print(f"wrote {out} with {len(lines)} entries")
+          PY
+          mv proprietary-dist/SHA256SUMS.txt proprietary-dist/SHA256SUMS-${{ matrix.os }}.txt
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            proprietary-dist/*.zip
+            proprietary-dist/*.tar.gz
+            proprietary-dist/SHA256SUMS-${{ matrix.os }}.txt
+          if-no-files-found: error
+
+  release:
+    needs: [resolve, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download built assets
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Consolidate assets
+        shell: bash
+        run: |
+          mkdir -p release-bundle
+          find release-assets -type f \( -name "*.zip" -o -name "*.tar.gz" -o -name "SHA256SUMS-*.txt" \) -exec cp {} release-bundle/ \;
+          ls -lah release-bundle
+
+          cat release-bundle/SHA256SUMS-*.txt > release-bundle/SHA256SUMS.txt
+
+      - name: Generate release notes
+        run: |
+          python scripts/generate_release_notes.py \
+            --version "${{ needs.resolve.outputs.version }}" \
+            --checksums "release-bundle/SHA256SUMS.txt" \
+            --out "release-bundle/RELEASE_NOTES.md"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.resolve.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: GMv3 Pro ${{ needs.resolve.outputs.version }}
+          body_path: release-bundle/RELEASE_NOTES.md
+          files: |
+            release-bundle/*.zip
+            release-bundle/*.tar.gz
+            release-bundle/SHA256SUMS.txt
+          prerelease: ${{ needs.resolve.outputs.prerelease }}

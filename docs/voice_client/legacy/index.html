@@ -1,0 +1,4259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voice Game Master</title>
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --bg-accent: #eff6ff;
+        --panel: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --accent: #2563eb;
+        --accent-2: #0ea5e9;
+        --danger: #dc2626;
+        --ok: #059669;
+        --border: #dbe5f2;
+        --shadow: rgba(15, 23, 42, 0.06);
+      }
+
+      body {
+        margin: 0;
+        font-family: "Manrope", "Avenir Next", "Segoe UI Variable Text", "Segoe UI",
+          sans-serif;
+        background: linear-gradient(180deg, var(--bg-accent), var(--bg));
+        color: var(--text);
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .hdr {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+        padding: 16px 18px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: #ffffff;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+
+      .sub {
+        margin: 4px 0 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        max-width: 72ch;
+        line-height: 1.35;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      @media (min-width: 980px) {
+        .grid {
+          grid-template-columns: 340px 1fr;
+        }
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 10px 26px var(--shadow);
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 10px 0;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        background: #f8fbff;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        outline: none;
+        font-size: 13px;
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: color-mix(in oklab, var(--accent) 58%, var(--border));
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: #f3f7fd;
+        color: var(--text);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      button.primary {
+        background: linear-gradient(
+          135deg,
+          color-mix(in oklab, var(--accent) 80%, white),
+          color-mix(in oklab, var(--accent-2) 84%, white)
+        );
+        color: #f8fbff;
+        border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+      }
+
+      button.danger {
+        color: color-mix(in oklab, var(--danger) 78%, black);
+        border-color: color-mix(in oklab, var(--danger) 48%, var(--border));
+        background: #fff8f8;
+      }
+
+      button:disabled {
+        opacity: 0.58;
+        cursor: not-allowed;
+      }
+
+      .status {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #f2f7ff;
+        font-size: 12px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #64748b;
+      }
+
+      .dot.ok {
+        background: var(--ok);
+      }
+
+      .dot.bad {
+        background: var(--danger);
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid color-mix(in oklab, var(--border) 92%, transparent);
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+
+      .tabBtn {
+        border-radius: 999px;
+        padding: 8px 12px;
+      }
+
+      .tabBtn.active {
+        background: color-mix(in oklab, var(--accent) 24%, white);
+        border-color: color-mix(in oklab, var(--accent) 40%, var(--border));
+      }
+
+      .panel {
+        display: none;
+      }
+
+      .panel.active {
+        display: block;
+      }
+
+      .log {
+        height: 520px;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding-right: 4px;
+      }
+
+      .msg {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: #fbfdff;
+      }
+
+      .who {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .msg.you .who {
+        color: color-mix(in oklab, var(--accent) 60%, var(--muted));
+      }
+
+      .msg.gm .who {
+        color: color-mix(in oklab, var(--ok) 55%, var(--muted));
+      }
+
+      .msg.err {
+        border-color: color-mix(in oklab, var(--danger) 58%, var(--border));
+        background: #fff8f8;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        font-size: 12px;
+      }
+
+      .sectionTitle {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: color-mix(in oklab, var(--muted) 92%, var(--text));
+        margin: 14px 0 8px 0;
+      }
+
+      .split2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      @media (min-width: 720px) {
+        .split2 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      .table th,
+      .table td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid color-mix(in oklab, var(--border) 90%, transparent);
+        vertical-align: top;
+      }
+
+      .table th {
+        color: var(--muted);
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 11px;
+      }
+
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        font-size: 12px;
+      }
+
+      .progress {
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #edf4ff;
+        overflow: hidden;
+      }
+
+      .progress > div {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(
+          90deg,
+          color-mix(in oklab, var(--accent) 80%, white),
+          color-mix(in oklab, var(--accent-2) 85%, white)
+        );
+      }
+
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      #panel-knowledge,
+      #panel-memory {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid color-mix(in oklab, var(--border) 88%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hdr">
+        <div>
+          <h1>Voice Game Master</h1>
+          <p class="sub">
+            Browser voice GM with configurable rules, prompts, and memory.
+          </p>
+        </div>
+        <div class="pill">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText" class="status">Disconnected</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="row" style="justify-content: space-between">
+            <div class="pill">
+              <span id="vadDot" class="dot"></span>
+              <span id="vadText" class="status">VAD: 0.000</span>
+            </div>
+            <button id="clearBtn">Clear Chat</button>
+          </div>
+
+          <div>
+            <label>WebSocket URL</label>
+            <input id="wsUrl" />
+          </div>
+
+          <div class="row" style="gap: 12px">
+            <div style="flex: 1">
+              <label>Input Mode</label>
+              <select id="modeSel">
+                <option value="ptt">Push-to-talk</option>
+                <option value="auto">Auto VAD</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label>Active Speaker</label>
+            <select id="activeSpeakerSel" disabled></select>
+          </div>
+
+          <div>
+            <label>VAD Threshold <span id="vadThresholdVal" class="status"></span></label>
+            <input id="vadThreshold" type="range" min="0.005" max="0.08" step="0.001" value="0.02" />
+          </div>
+
+          <div class="row">
+            <button id="connectBtn" class="primary">Connect</button>
+            <button id="disconnectBtn" class="danger" disabled>Disconnect</button>
+          </div>
+
+          <div class="row">
+            <button id="pttBtn" class="primary" disabled style="flex: 1">Hold To Talk</button>
+          </div>
+
+          <div class="status mono" id="netStats"></div>
+
+          <p class="hint">
+            Open via <code>http://localhost:8000/</code> (not <code>file://</code>). Use localhost for microphone
+            access; LAN HTTP usually needs HTTPS. Settings are stored in <code>data/settings.json</code>.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="tabs">
+            <button class="tabBtn active" data-tab="chat">Chat</button>
+            <button class="tabBtn" data-tab="setup">Setup</button>
+            <button class="tabBtn" data-tab="settings">Advanced</button>
+          </div>
+
+          <div id="panel-chat" class="panel active">
+            <div class="log" id="log"></div>
+            <div class="row" style="margin-top: 12px">
+              <input id="manualText" placeholder="Type here to test the GM without microphone..." />
+              <button id="manualSendBtn" class="primary" style="width: 140px">Send</button>
+            </div>
+            <p class="hint" style="margin: 8px 0 0 0">
+              Tip: if typed messages work but voice does not, your issue is microphone permissions or audio capture.
+            </p>
+          </div>
+
+          <div id="panel-setup" class="panel">
+            <div class="sectionTitle">Setup Wizard</div>
+            <p class="hint" style="margin-top: 6px">
+              Guided path for first-time setup. Start wizard to auto-check keys, system/rulebook, then apply.
+            </p>
+            <div class="split2">
+              <div>
+                <label>Wizard Mode</label>
+                <select id="setup_wizard_mode">
+                  <option value="guided">Guided (recommended)</option>
+                  <option value="fast">Fast Apply</option>
+                </select>
+              </div>
+              <div>
+                <label>AI Prompt Assist</label>
+                <select id="setup_wizard_ai">
+                  <option value="true">On</option>
+                  <option value="false">Off</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <button id="setupWizardBtn" class="primary" disabled>Run Setup Wizard</button>
+              <span id="setupWizardStatus" class="status"></span>
+            </div>
+
+            <div class="sectionTitle">Quick Setup</div>
+            <p class="hint" style="margin-top: 6px">
+              Simple setup for basic users. Choose from dropdowns, apply once, and start playing.
+            </p>
+            <div class="split2">
+              <div>
+                <label>Game System</label>
+                <select id="setup_system">
+                  <option value="numenera">Numenera</option>
+                  <option value="dnd5e">D&D 5e</option>
+                  <option value="pf2e">Pathfinder 2e</option>
+                  <option value="generic">Generic RPG</option>
+                </select>
+              </div>
+              <div>
+                <label>Ruleset Tag</label>
+                <input id="setup_ruleset_tag" placeholder="numenera / dnd5e / custom" />
+              </div>
+            </div>
+
+            <div class="sectionTitle">Game System Search</div>
+            <p class="hint" style="margin-top: 6px">
+              Search the internet for popular systems and apply beginner hints.
+            </p>
+            <div class="split2">
+              <div>
+                <label>Search Query</label>
+                <input id="setup_system_query" placeholder="Call of Cthulhu, Blades in the Dark, etc." />
+              </div>
+              <div class="row" style="align-items: flex-end; margin: 0">
+                <button id="setupSystemSearchBtn" disabled style="width: 100%">Search Systems</button>
+              </div>
+              <div>
+                <label>Search Results</label>
+                <select id="setup_system_result"></select>
+              </div>
+              <div class="row" style="align-items: flex-end; margin: 0">
+                <button id="setupSystemUseBtn" disabled style="width: 100%">Use Selected Hint</button>
+              </div>
+            </div>
+            <div id="setupSystemHint" class="status" style="margin-top: 8px"></div>
+
+            <div class="sectionTitle">Rulebook</div>
+            <div class="split2">
+              <div>
+                <label>Rulebook Source</label>
+                <select id="setup_rulebook_source">
+                  <option value="doc">Uploaded / Dropdown</option>
+                  <option value="path">Server File Path</option>
+                </select>
+              </div>
+              <div>
+                <label>Rulebook (uploaded docs)</label>
+                <select id="setup_rulebook_doc"></select>
+              </div>
+              <div>
+                <label>Rulebook Path</label>
+                <input id="setup_rulebook_path" placeholder="Numenera.pdf" />
+              </div>
+              <div>
+                <label>Upload Rulebook PDF</label>
+                <input id="setup_rulebook_file" type="file" accept="application/pdf" />
+              </div>
+              <div class="row" style="align-items: flex-end; margin: 0">
+                <button id="setupRulebookUploadBtn" disabled style="width: 100%">Upload + Select</button>
+              </div>
+            </div>
+            <div id="setupRulebookStatus" class="status" style="margin-top: 8px"></div>
+
+            <div class="sectionTitle">Play Style</div>
+            <div class="split2">
+              <div>
+                <label>GM Reply Language</label>
+                <select id="setup_language_mode">
+                  <option value="player">Auto (same language as speaker)</option>
+                  <option value="locale">Fixed language</option>
+                </select>
+              </div>
+              <div>
+                <label>Fixed Language</label>
+                <select id="setup_locale">
+                  <option value="en-US">English (US)</option>
+                  <option value="es-ES">Spanish</option>
+                  <option value="fr-FR">French</option>
+                  <option value="de-DE">German</option>
+                  <option value="it-IT">Italian</option>
+                  <option value="pt-BR">Portuguese (BR)</option>
+                  <option value="ru-RU">Russian</option>
+                  <option value="uk-UA">Ukrainian</option>
+                  <option value="pl-PL">Polish</option>
+                  <option value="tr-TR">Turkish</option>
+                  <option value="ja-JP">Japanese</option>
+                  <option value="ko-KR">Korean</option>
+                  <option value="zh-CN">Chinese (Simplified)</option>
+                </select>
+              </div>
+              <div>
+                <label>Tone</label>
+                <select id="setup_tone">
+                  <option value="balanced">Balanced</option>
+                  <option value="heroic">Heroic</option>
+                  <option value="dark">Dark</option>
+                  <option value="horror">Horror</option>
+                  <option value="cozy">Cozy</option>
+                  <option value="sci-fi">Sci-fi</option>
+                </select>
+              </div>
+              <div>
+                <label>Rules Handling</label>
+                <select id="setup_rules_style">
+                  <option value="balanced">Balanced</option>
+                  <option value="strict">Strict Rules</option>
+                  <option value="narrative">Narrative First</option>
+                </select>
+              </div>
+              <div>
+                <label>STT Provider</label>
+                <select id="setup_stt_provider">
+                  <option value="deepgram">Deepgram Nova-3 + diarization</option>
+                  <option value="openai">OpenAI STT</option>
+                </select>
+              </div>
+              <div>
+                <label>TTS Provider</label>
+                <select id="setup_tts_provider">
+                  <option value="openai">OpenAI TTS</option>
+                  <option value="elevenlabs">ElevenLabs TTS</option>
+                </select>
+              </div>
+              <div>
+                <label>ElevenLabs Voice</label>
+                <select id="setup_elevenlabs_voice"></select>
+              </div>
+              <div>
+                <label>ElevenLabs Voice ID (paste)</label>
+                <input id="setup_elevenlabs_voice_id" placeholder="EXAVITQu4vr4xnSDxMaL" />
+              </div>
+              <div class="row" style="align-items: flex-end; margin: 0">
+                <button id="setupRefreshVoicesBtn" disabled style="width: 100%">Refresh ElevenLabs Voices</button>
+              </div>
+              <div>
+                <label>Player Count</label>
+                <select id="setup_player_count">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                </select>
+              </div>
+              <div>
+                <label>Primary Speaker</label>
+                <select id="setup_active_player"></select>
+              </div>
+            </div>
+
+            <div class="sectionTitle">API Keys</div>
+            <p class="hint" style="margin-top: 6px">
+              Change provider keys from Setup. Empty values are ignored unless action is set to Clear.
+            </p>
+            <div class="split2">
+              <div>
+                <label>OpenAI API Key Action</label>
+                <select id="setup_openai_key_action">
+                  <option value="keep">Keep Existing</option>
+                  <option value="set">Update</option>
+                  <option value="clear">Clear</option>
+                </select>
+              </div>
+              <div>
+                <label>OpenAI API Key</label>
+                <input id="setup_openai_api_key" type="password" placeholder="sk-..." />
+              </div>
+              <div>
+                <label>Deepgram API Key Action</label>
+                <select id="setup_deepgram_key_action">
+                  <option value="keep">Keep Existing</option>
+                  <option value="set">Update</option>
+                  <option value="clear">Clear</option>
+                </select>
+              </div>
+              <div>
+                <label>Deepgram API Key</label>
+                <input id="setup_deepgram_api_key" type="password" placeholder="dg-..." />
+              </div>
+              <div>
+                <label>ElevenLabs API Key Action</label>
+                <select id="setup_elevenlabs_key_action">
+                  <option value="keep">Keep Existing</option>
+                  <option value="set">Update</option>
+                  <option value="clear">Clear</option>
+                </select>
+              </div>
+              <div>
+                <label>ElevenLabs API Key</label>
+                <input id="setup_elevenlabs_api_key" type="password" placeholder="elevenlabs key" />
+              </div>
+              <div>
+                <label>OpenAI Base URL Action</label>
+                <select id="setup_openai_base_action">
+                  <option value="keep">Keep Existing</option>
+                  <option value="set">Update</option>
+                  <option value="clear">Clear</option>
+                </select>
+              </div>
+              <div>
+                <label>OpenAI Base URL</label>
+                <input id="setup_openai_base_url" placeholder="https://api.openai.com/v1" />
+              </div>
+            </div>
+            <div class="row">
+              <button id="setupSaveKeysBtn" disabled>Save API Keys</button>
+              <button id="setupReconnectBtn" disabled>Reconnect Voice</button>
+              <span id="setupKeysStatus" class="status"></span>
+            </div>
+            <div id="setupSecretsSummary" class="small"></div>
+
+            <div>
+              <label>Optional AI Setup Notes</label>
+              <textarea
+                id="setup_ai_notes"
+                placeholder="Example: gritty exploration, quick turns, keep rulings strict but concise..."
+              ></textarea>
+            </div>
+            <div class="row">
+              <button id="setupApplyBtn" class="primary" disabled>Apply Quick Setup</button>
+              <button id="setupAiBtn" disabled>Apply + AI Prompt Setup</button>
+              <span id="setupStatus" class="status"></span>
+            </div>
+          </div>
+
+          <div id="panel-settings" class="panel">
+            <div class="sectionTitle">Game</div>
+            <div class="split2">
+              <div>
+                <label>Campaign ID</label>
+                <input id="set_campaign_id" />
+              </div>
+              <div>
+                <label>Recent Campaigns</label>
+                <select id="recent_campaigns"></select>
+              </div>
+              <div>
+                <label>Session ID</label>
+                <input id="set_session_id" />
+              </div>
+              <div>
+                <label>Player ID</label>
+                <input id="set_player_id" />
+              </div>
+              <div>
+                <label>Recent Players</label>
+                <select id="recent_players"></select>
+              </div>
+              <div>
+                <label>Locale</label>
+                <input id="set_locale" placeholder="en-US" />
+              </div>
+            </div>
+            <div class="row">
+              <button id="campaignNewBtn" class="primary" disabled>New Game</button>
+              <button id="campaignLatestBtn" disabled>Resume Latest Save</button>
+              <button id="campaignResetBtn" class="danger" disabled>Reset Game</button>
+              <span id="campaignStatus" class="status"></span>
+            </div>
+
+            <div class="sectionTitle">Players (Voice Identity)</div>
+            <p class="hint" style="margin-top: 6px">
+              Up to 8 players. Format per line: <code>player_id | display name | voice profile label</code>.
+              Example: <code>alice | Alice | calm low voice</code>
+            </p>
+            <div>
+              <label>Player Profiles</label>
+              <textarea
+                id="set_player_profiles"
+                placeholder="player1 | Player 1 | clear mid voice&#10;player2 | Player 2 | high fast voice"
+              ></textarea>
+            </div>
+
+            <div class="sectionTitle">Networking</div>
+            <div class="split2">
+              <div>
+                <label>WebSocket Host (restart)</label>
+                <input id="set_ws_host" placeholder="0.0.0.0" />
+              </div>
+              <div>
+                <label>WebSocket Port (restart)</label>
+                <input id="set_ws_port" type="number" min="1" max="65535" />
+              </div>
+              <div>
+                <label>UI Host (restart)</label>
+                <input id="set_http_host" placeholder="0.0.0.0" />
+              </div>
+              <div>
+                <label>UI Port (restart)</label>
+                <input id="set_http_port" type="number" min="1" max="65535" />
+              </div>
+            </div>
+
+            <div class="sectionTitle">Models</div>
+            <div class="split2">
+              <div>
+                <label>STT Provider (restart)</label>
+                <select id="set_stt_provider">
+                  <option value="openai">OpenAI STT</option>
+                  <option value="deepgram">Deepgram Nova (diarization)</option>
+                </select>
+              </div>
+              <div>
+                <label>TTS Provider (restart)</label>
+                <select id="set_tts_provider">
+                  <option value="openai">OpenAI TTS</option>
+                  <option value="elevenlabs">ElevenLabs TTS</option>
+                </select>
+              </div>
+              <div>
+                <label>LLM Model</label>
+                <input id="set_llm_model" list="llm_models" />
+              </div>
+              <div>
+                <label>STT Model (restart)</label>
+                <input id="set_stt_model" list="stt_models" />
+              </div>
+              <div>
+                <label>TTS Model (restart)</label>
+                <input id="set_tts_model" list="tts_models" />
+              </div>
+              <div>
+                <label>TTS Voice (restart)</label>
+                <input id="set_tts_voice" list="tts_voices" />
+              </div>
+              <div>
+                <label>ElevenLabs Voices</label>
+                <select id="set_elevenlabs_voice"></select>
+              </div>
+              <div>
+                <label>ElevenLabs Voice ID (paste)</label>
+                <input id="set_elevenlabs_voice_id" placeholder="EXAVITQu4vr4xnSDxMaL" />
+              </div>
+              <div class="row" style="align-items: flex-end; margin: 0">
+                <button id="setRefreshVoicesBtn" disabled style="width: 100%">Refresh ElevenLabs Voices</button>
+              </div>
+              <div>
+                <label>Embedding Model</label>
+                <input id="set_embedding_model" list="embedding_models" />
+              </div>
+            </div>
+            <p class="hint" style="margin-top: 8px">
+              You can type a custom model name in any model field and click <b>Save Settings</b>. It will be
+              remembered in your dropdown options for next time.
+            </p>
+
+            <div class="sectionTitle">Knowledge</div>
+            <p class="hint" style="margin-top: 6px">
+              Knowledge lets the GM search your uploaded PDFs. Setup:
+              1) enable retrieval here,
+              2) upload + ingest PDFs in this Advanced page below,
+              3) toggle "Use" on the docs you want active.
+              Backend: Local = no Docker; Remote = connect to a Qdrant server URL.
+            </p>
+            <div class="split2">
+              <div class="row" style="align-items: flex-end; margin: 0">
+                <div style="flex: 1">
+                  <label>Enable Retrieval</label>
+                  <select id="set_kb_enabled">
+                    <option value="true">Enabled</option>
+                    <option value="false">Disabled</option>
+                  </select>
+                </div>
+                <div style="flex: 1">
+                  <label>Top K</label>
+                  <input id="set_kb_top_k" type="number" min="1" max="20" />
+                </div>
+              </div>
+              <div>
+                <label>Backend</label>
+                <select id="set_kb_backend">
+                  <option value="local">Local (no Docker)</option>
+                  <option value="remote">Remote Qdrant URL</option>
+                </select>
+              </div>
+              <div>
+                <label>Local Path</label>
+                <input id="set_kb_local_path" placeholder="data/qdrant_local" />
+              </div>
+              <div>
+                <label>Qdrant URL</label>
+                <input id="set_qdrant_url" placeholder="http://localhost:6333" />
+              </div>
+              <div>
+                <label>Collection</label>
+                <input id="set_qdrant_collection" />
+              </div>
+              <div>
+                <label>Split Collections</label>
+                <select id="set_kb_split_collections">
+                  <option value="true">Yes (Game + GM Guidance)</option>
+                  <option value="false">No (Single Collection)</option>
+                </select>
+              </div>
+              <div>
+                <label>Game Collection</label>
+                <input id="set_qdrant_collection_game" />
+              </div>
+              <div>
+                <label>Guidance Collection</label>
+                <input id="set_qdrant_collection_guidance" />
+              </div>
+              <div>
+                <label>Chunk Max Chars</label>
+                <input id="set_chunk_max_chars" type="number" min="200" max="6000" />
+              </div>
+              <div>
+                <label>Chunk Overlap</label>
+                <input id="set_chunk_overlap" type="number" min="0" max="1000" />
+              </div>
+            </div>
+
+            <div class="sectionTitle">Primary Rulebook</div>
+            <p class="hint" style="margin-top: 6px">
+              Choose an uploaded PDF from dropdown, upload a new one here, or use a local server path.
+            </p>
+            <div class="split2">
+              <div>
+                <label>Source</label>
+                <select id="set_primary_rulebook_source">
+                  <option value="doc">Uploaded / Existing Document</option>
+                  <option value="path">Local Server Path</option>
+                </select>
+              </div>
+              <div>
+                <label>Document Dropdown</label>
+                <select id="set_primary_rulebook_doc_choice"></select>
+              </div>
+              <div>
+                <label>Rulebook Path</label>
+                <input id="set_primary_rulebook_path" placeholder="Numenera.pdf" />
+              </div>
+              <div>
+                <label>Doc ID</label>
+                <input id="set_primary_rulebook_doc_id" placeholder="numenera_core" />
+              </div>
+              <div>
+                <label>Ruleset Tag (optional)</label>
+                <input id="set_primary_rulebook_ruleset" placeholder="numenera" />
+              </div>
+              <div>
+                <label>Doc Kind</label>
+                <select id="set_primary_rulebook_doc_kind">
+                  <option value="rulebook">Rulebook</option>
+                  <option value="adventure">Adventure</option>
+                  <option value="lorebook">Lorebook</option>
+                  <option value="gm_advice">GM Advice</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label>Collection Target</label>
+                <select id="set_primary_rulebook_collection_target">
+                  <option value="game">Game</option>
+                  <option value="guidance">Guidance</option>
+                  <option value="default">Default (single collection mode)</option>
+                </select>
+              </div>
+              <div>
+                <label>Auto Ingest On Save/Start</label>
+                <select id="set_primary_rulebook_auto_ingest">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              <div>
+                <label>Auto Activate For Retrieval</label>
+                <select id="set_primary_rulebook_auto_activate">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              <div>
+                <label>Upload Rulebook PDF</label>
+                <input id="rulebook_file" type="file" accept="application/pdf" />
+              </div>
+              <div class="row" style="align-items: flex-end; margin: 0">
+                <button id="rulebookUploadBtn" disabled style="width: 100%">Upload To Library</button>
+              </div>
+              <div class="row" style="align-items: flex-end; margin: 0">
+                <button id="rulebookSyncBtn" disabled style="width: 100%">Sync Rulebook Now</button>
+              </div>
+            </div>
+            <div id="rulebookSyncStatus" class="status" style="margin-top: 8px"></div>
+
+            <div class="sectionTitle">Prompts</div>
+            <div>
+              <label>Intent Classify (system)</label>
+              <textarea id="set_intent_system"></textarea>
+            </div>
+            <div>
+              <label>Resolve (system)</label>
+              <textarea id="set_resolve_system"></textarea>
+            </div>
+            <div>
+              <label>Resolve (user template)</label>
+              <textarea id="set_resolve_user"></textarea>
+              <div class="small">
+                Available variables: <span class="mono">{{transcript}}</span>,
+                <span class="mono">{{memory}}</span>, <span class="mono">{{state_json}}</span>,
+                <span class="mono">{{snippets}}</span>
+              </div>
+            </div>
+            <div class="split2">
+              <div>
+                <label>Include Memory</label>
+                <select id="set_include_memory">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              <div>
+                <label>Memory Turns</label>
+                <input id="set_memory_turns" type="number" min="0" max="200" />
+              </div>
+              <div>
+                <label>Response Language Mode</label>
+                <select id="set_response_language_mode">
+                  <option value="player">Follow Player Speech</option>
+                  <option value="locale">Use Fixed Locale</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="sectionTitle">Prompt Helper</div>
+            <div>
+              <label>Basic Prompt (used for AI generation)</label>
+              <textarea id="prompt_basic" placeholder="Describe the game, tone, and constraints you want the prompts to follow..."></textarea>
+            </div>
+            <p class="hint" style="margin-top: 8px">
+              Example without knowledge base:
+              <code>grim low-magic campaign, quick pacing, concise rulings, ask one clear follow-up question</code>.
+              Example with knowledge base:
+              <code>use uploaded rulebooks as source of truth, cite implied rule intent in plain language, avoid long lore dumps</code>.
+            </p>
+            <div class="split2">
+              <div>
+                <label>Style / Genre (optional)</label>
+                <input id="prompt_style" placeholder="grimdark, cozy, heroic, horror, etc." />
+                <div class="small">
+                  Generates prompt templates that work with or without the knowledgebase, and include
+                  <span class="mono">{{snippets}}</span> when retrieval is enabled.
+                </div>
+              </div>
+              <div>
+                <div class="row" style="align-items: flex-end; margin: 0">
+                  <button id="promptGenBtn" class="primary" disabled style="width: 100%">
+                    Generate All Prompts (AI)
+                  </button>
+                </div>
+                <div class="row" style="align-items: flex-end; margin: 10px 0 0 0">
+                  <button id="promptGenIntentBtn" disabled style="width: 100%">Generate Intent Prompt</button>
+                </div>
+                <div class="row" style="align-items: flex-end; margin: 10px 0 0 0">
+                  <button id="promptGenResolveBtn" disabled style="width: 100%">Generate Resolve (System)</button>
+                </div>
+                <div class="row" style="align-items: flex-end; margin: 10px 0 0 0">
+                  <button id="promptGenTemplateBtn" disabled style="width: 100%">Generate Resolve (Template)</button>
+                </div>
+              </div>
+            </div>
+            <div id="promptGenStatus" class="status" style="margin-top: 8px"></div>
+
+            <div class="row">
+              <button id="settingsSaveBtn" class="primary" disabled>Save Settings</button>
+              <span id="settingsStatus" class="status"></span>
+            </div>
+          </div>
+
+          <div id="panel-knowledge" class="panel">
+            <div class="sectionTitle">Upload PDF</div>
+            <div class="split2">
+              <div>
+                <label>Doc ID</label>
+                <input id="kb_doc_id" placeholder="ruleset_core_v1" />
+              </div>
+              <div>
+                <label>Doc Type</label>
+                <select id="kb_doc_kind">
+                  <option value="rulebook">Rulebook (rules)</option>
+                  <option value="adventure">Adventure (missions/story)</option>
+                  <option value="lorebook">Lorebook (world/lore)</option>
+                  <option value="gm_advice">GM Advice (how to run)</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label>Collection Target</label>
+                <select id="kb_collection_target">
+                  <option value="">Auto (from Doc Type)</option>
+                  <option value="game">Game Knowledge</option>
+                  <option value="guidance">GM Guidance</option>
+                </select>
+              </div>
+            </div>
+            <div class="split2">
+              <div>
+                <label>Ruleset Tag (optional)</label>
+                <input id="kb_ruleset" placeholder="DND5E / PF2E / custom" />
+              </div>
+              <div>
+                <label>Tip</label>
+                <input disabled value="Use Doc Type to separate rules vs lore vs GM advice." />
+              </div>
+            </div>
+            <p class="hint" style="margin-top: 8px">
+              After upload, click <b>Ingest</b> on the document to parse, chunk, embed, and store it.
+            </p>
+            <div class="row" style="align-items: flex-end">
+              <div style="flex: 1">
+                <label>PDF File</label>
+                <input id="kb_file" type="file" accept="application/pdf" />
+              </div>
+              <button id="kb_upload_btn" class="primary" disabled>Upload</button>
+            </div>
+            <div class="progress" title="Upload progress">
+              <div id="kb_upload_bar"></div>
+            </div>
+            <div id="kb_upload_status" class="status" style="margin-top: 8px"></div>
+
+            <div class="sectionTitle">Search</div>
+            <p class="hint" style="margin-top: 6px">
+              Searches only the docs currently toggled "Use" (active docs). If you get zero results, ingest a PDF
+              first.
+            </p>
+              <div class="split2">
+                <div>
+                  <label>Query</label>
+                  <input id="kb_search_query" placeholder="Where is the town of Phandalin?" />
+                </div>
+              <div>
+                <label>Chunk Type</label>
+                <select id="kb_search_type">
+                  <option value="any">Any</option>
+                  <option value="rules">Rules</option>
+                  <option value="lore">Lore</option>
+                  <option value="characters">Characters</option>
+                  <option value="locations">Locations</option>
+                  <option value="quests">Quests</option>
+                  <option value="factions">Factions</option>
+                  <option value="items">Items</option>
+                  <option value="monsters">Monsters</option>
+                  <option value="story">Story</option>
+                  <option value="gm_advice">GM Advice</option>
+                  <option value="tables">Tables</option>
+                  <option value="examples">Examples</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </div>
+            </div>
+            <div class="split2">
+                <div>
+                  <label>Doc Type</label>
+                  <select id="kb_search_doc_kind">
+                    <option value="any">Any</option>
+                    <option value="rulebook">Rulebook</option>
+                    <option value="adventure">Adventure</option>
+                    <option value="lorebook">Lorebook</option>
+                    <option value="gm_advice">GM Advice</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Collection</label>
+                  <select id="kb_search_collection">
+                    <option value="any">Any</option>
+                    <option value="game">Game</option>
+                    <option value="guidance">Guidance</option>
+                  </select>
+                </div>
+                <div class="row" style="align-items: flex-end; margin: 0">
+                  <button id="kb_search_btn" class="primary" disabled style="width: 100%">Search</button>
+                </div>
+              </div>
+            <div id="kb_search_status" class="status" style="margin-top: 8px"></div>
+            <div id="kb_search_results" class="log" style="height: 220px"></div>
+
+            <div class="sectionTitle">Documents</div>
+            <div class="row" style="justify-content: space-between; margin-top: 0">
+              <div class="status">Tip: toggle "Use" to include a doc in retrieval.</div>
+              <div class="row" style="margin: 0">
+                <button id="kb_refresh_btn" disabled>Refresh</button>
+              </div>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width: 70px">Use</th>
+                  <th>Doc</th>
+                  <th>Status</th>
+                  <th style="width: 230px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="kb_docs"></tbody>
+            </table>
+          </div>
+
+          <div id="panel-memory" class="panel">
+            <div class="row" style="justify-content: space-between; margin-top: 0">
+              <div class="status">Memory is stored in SQLite and can be viewed by campaign, session, or player.</div>
+              <div class="row" style="margin: 0">
+                <button id="mem_refresh_btn" disabled>Refresh</button>
+                <button id="mem_clear_btn" class="danger" disabled>Clear</button>
+              </div>
+            </div>
+            <div class="split2" style="margin-top: 10px">
+              <div>
+                <label>Memory Scope</label>
+                <select id="mem_scope">
+                  <option value="campaign">Campaign</option>
+                  <option value="session">Session</option>
+                  <option value="player">Player</option>
+                </select>
+              </div>
+              <div>
+                <label>Session Filter</label>
+                <input id="mem_session_id" placeholder="ws" />
+              </div>
+              <div>
+                <label>Player Filter</label>
+                <input id="mem_player_id" placeholder="player1" />
+              </div>
+            </div>
+            <div id="mem_list" class="log" style="height: 520px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <datalist id="llm_models">
+      <option value="gpt-4.1-mini"></option>
+      <option value="gpt-4.1"></option>
+      <option value="gpt-4o-mini"></option>
+      <option value="gpt-4o"></option>
+      <option value="o3-mini"></option>
+    </datalist>
+    <datalist id="stt_models">
+      <option value="gpt-4o-transcribe"></option>
+      <option value="whisper-1"></option>
+      <option value="nova-3-general"></option>
+      <option value="nova-2"></option>
+    </datalist>
+    <datalist id="tts_models">
+      <option value="gpt-4o-mini-tts"></option>
+    </datalist>
+    <datalist id="tts_voices">
+      <option value="alloy"></option>
+      <option value="ash"></option>
+      <option value="ballad"></option>
+      <option value="coral"></option>
+      <option value="echo"></option>
+      <option value="sage"></option>
+      <option value="shimmer"></option>
+    </datalist>
+    <datalist id="embedding_models">
+      <option value="text-embedding-3-small"></option>
+      <option value="text-embedding-3-large"></option>
+    </datalist>
+
+    <script>
+      const logEl = document.getElementById("log");
+      const wsUrlEl = document.getElementById("wsUrl");
+      const connectBtn = document.getElementById("connectBtn");
+      const disconnectBtn = document.getElementById("disconnectBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const pttBtn = document.getElementById("pttBtn");
+      const statusDot = document.getElementById("statusDot");
+      const statusText = document.getElementById("statusText");
+      const modeSel = document.getElementById("modeSel");
+      const vadThresholdEl = document.getElementById("vadThreshold");
+      const vadThresholdVal = document.getElementById("vadThresholdVal");
+      const vadDot = document.getElementById("vadDot");
+      const vadText = document.getElementById("vadText");
+      const netStats = document.getElementById("netStats");
+      const activeSpeakerSel = document.getElementById("activeSpeakerSel");
+      const manualText = document.getElementById("manualText");
+      const manualSendBtn = document.getElementById("manualSendBtn");
+
+      const tabButtons = Array.from(document.querySelectorAll(".tabBtn"));
+      const panels = {
+        chat: document.getElementById("panel-chat"),
+        setup: document.getElementById("panel-setup"),
+        settings: document.getElementById("panel-settings"),
+        knowledge: document.getElementById("panel-knowledge"),
+        memory: document.getElementById("panel-memory"),
+      };
+
+      // Quick setup UI elements
+      const setup_wizard_mode = document.getElementById("setup_wizard_mode");
+      const setup_wizard_ai = document.getElementById("setup_wizard_ai");
+      const setupWizardBtn = document.getElementById("setupWizardBtn");
+      const setupWizardStatus = document.getElementById("setupWizardStatus");
+      const setup_system = document.getElementById("setup_system");
+      const setup_ruleset_tag = document.getElementById("setup_ruleset_tag");
+      const setup_system_query = document.getElementById("setup_system_query");
+      const setupSystemSearchBtn = document.getElementById("setupSystemSearchBtn");
+      const setup_system_result = document.getElementById("setup_system_result");
+      const setupSystemUseBtn = document.getElementById("setupSystemUseBtn");
+      const setupSystemHint = document.getElementById("setupSystemHint");
+      const setup_rulebook_source = document.getElementById("setup_rulebook_source");
+      const setup_rulebook_doc = document.getElementById("setup_rulebook_doc");
+      const setup_rulebook_path = document.getElementById("setup_rulebook_path");
+      const setup_rulebook_file = document.getElementById("setup_rulebook_file");
+      const setupRulebookUploadBtn = document.getElementById("setupRulebookUploadBtn");
+      const setupRulebookStatus = document.getElementById("setupRulebookStatus");
+      const setup_language_mode = document.getElementById("setup_language_mode");
+      const setup_locale = document.getElementById("setup_locale");
+      const setup_tone = document.getElementById("setup_tone");
+      const setup_rules_style = document.getElementById("setup_rules_style");
+      const setup_stt_provider = document.getElementById("setup_stt_provider");
+      const setup_tts_provider = document.getElementById("setup_tts_provider");
+      const setup_elevenlabs_voice = document.getElementById("setup_elevenlabs_voice");
+      const setup_elevenlabs_voice_id = document.getElementById("setup_elevenlabs_voice_id");
+      const setupRefreshVoicesBtn = document.getElementById("setupRefreshVoicesBtn");
+      const setup_player_count = document.getElementById("setup_player_count");
+      const setup_active_player = document.getElementById("setup_active_player");
+      const setup_ai_notes = document.getElementById("setup_ai_notes");
+      const setupApplyBtn = document.getElementById("setupApplyBtn");
+      const setupAiBtn = document.getElementById("setupAiBtn");
+      const setupStatus = document.getElementById("setupStatus");
+      const setup_openai_key_action = document.getElementById("setup_openai_key_action");
+      const setup_openai_api_key = document.getElementById("setup_openai_api_key");
+      const setup_deepgram_key_action = document.getElementById("setup_deepgram_key_action");
+      const setup_deepgram_api_key = document.getElementById("setup_deepgram_api_key");
+      const setup_elevenlabs_key_action = document.getElementById("setup_elevenlabs_key_action");
+      const setup_elevenlabs_api_key = document.getElementById("setup_elevenlabs_api_key");
+      const setup_openai_base_action = document.getElementById("setup_openai_base_action");
+      const setup_openai_base_url = document.getElementById("setup_openai_base_url");
+      const setupSaveKeysBtn = document.getElementById("setupSaveKeysBtn");
+      const setupReconnectBtn = document.getElementById("setupReconnectBtn");
+      const setupKeysStatus = document.getElementById("setupKeysStatus");
+      const setupSecretsSummary = document.getElementById("setupSecretsSummary");
+
+      // Settings form elements
+      const settingsSaveBtn = document.getElementById("settingsSaveBtn");
+      const settingsStatus = document.getElementById("settingsStatus");
+      const set_campaign_id = document.getElementById("set_campaign_id");
+      const recent_campaigns = document.getElementById("recent_campaigns");
+      const set_session_id = document.getElementById("set_session_id");
+      const set_player_id = document.getElementById("set_player_id");
+      const recent_players = document.getElementById("recent_players");
+      const set_locale = document.getElementById("set_locale");
+      const set_player_profiles = document.getElementById("set_player_profiles");
+      const campaignNewBtn = document.getElementById("campaignNewBtn");
+      const campaignLatestBtn = document.getElementById("campaignLatestBtn");
+      const campaignResetBtn = document.getElementById("campaignResetBtn");
+      const campaignStatus = document.getElementById("campaignStatus");
+      const set_ws_host = document.getElementById("set_ws_host");
+      const set_ws_port = document.getElementById("set_ws_port");
+      const set_http_host = document.getElementById("set_http_host");
+      const set_http_port = document.getElementById("set_http_port");
+      const set_stt_provider = document.getElementById("set_stt_provider");
+      const set_tts_provider = document.getElementById("set_tts_provider");
+      const set_llm_model = document.getElementById("set_llm_model");
+      const set_stt_model = document.getElementById("set_stt_model");
+      const set_tts_model = document.getElementById("set_tts_model");
+      const set_tts_voice = document.getElementById("set_tts_voice");
+      const set_elevenlabs_voice = document.getElementById("set_elevenlabs_voice");
+      const set_elevenlabs_voice_id = document.getElementById("set_elevenlabs_voice_id");
+      const setRefreshVoicesBtn = document.getElementById("setRefreshVoicesBtn");
+      const set_embedding_model = document.getElementById("set_embedding_model");
+      const set_kb_enabled = document.getElementById("set_kb_enabled");
+      const set_kb_top_k = document.getElementById("set_kb_top_k");
+      const set_kb_backend = document.getElementById("set_kb_backend");
+      const set_kb_local_path = document.getElementById("set_kb_local_path");
+      const set_qdrant_url = document.getElementById("set_qdrant_url");
+      const set_qdrant_collection = document.getElementById("set_qdrant_collection");
+      const set_kb_split_collections = document.getElementById("set_kb_split_collections");
+      const set_qdrant_collection_game = document.getElementById("set_qdrant_collection_game");
+      const set_qdrant_collection_guidance = document.getElementById("set_qdrant_collection_guidance");
+      const set_chunk_max_chars = document.getElementById("set_chunk_max_chars");
+      const set_chunk_overlap = document.getElementById("set_chunk_overlap");
+      const set_primary_rulebook_source = document.getElementById("set_primary_rulebook_source");
+      const set_primary_rulebook_doc_choice = document.getElementById("set_primary_rulebook_doc_choice");
+      const set_primary_rulebook_path = document.getElementById("set_primary_rulebook_path");
+      const set_primary_rulebook_doc_id = document.getElementById("set_primary_rulebook_doc_id");
+      const set_primary_rulebook_ruleset = document.getElementById("set_primary_rulebook_ruleset");
+      const set_primary_rulebook_doc_kind = document.getElementById("set_primary_rulebook_doc_kind");
+      const set_primary_rulebook_collection_target = document.getElementById("set_primary_rulebook_collection_target");
+      const set_primary_rulebook_auto_ingest = document.getElementById("set_primary_rulebook_auto_ingest");
+      const set_primary_rulebook_auto_activate = document.getElementById("set_primary_rulebook_auto_activate");
+      const rulebook_file = document.getElementById("rulebook_file");
+      const rulebookUploadBtn = document.getElementById("rulebookUploadBtn");
+      const rulebookSyncBtn = document.getElementById("rulebookSyncBtn");
+      const rulebookSyncStatus = document.getElementById("rulebookSyncStatus");
+      const set_intent_system = document.getElementById("set_intent_system");
+      const set_resolve_system = document.getElementById("set_resolve_system");
+      const set_resolve_user = document.getElementById("set_resolve_user");
+      const set_include_memory = document.getElementById("set_include_memory");
+      const set_memory_turns = document.getElementById("set_memory_turns");
+      const set_response_language_mode = document.getElementById("set_response_language_mode");
+      const prompt_basic = document.getElementById("prompt_basic");
+      const prompt_style = document.getElementById("prompt_style");
+      const promptGenBtn = document.getElementById("promptGenBtn");
+      const promptGenIntentBtn = document.getElementById("promptGenIntentBtn");
+      const promptGenResolveBtn = document.getElementById("promptGenResolveBtn");
+      const promptGenTemplateBtn = document.getElementById("promptGenTemplateBtn");
+      const promptGenStatus = document.getElementById("promptGenStatus");
+
+      // Knowledge UI elements
+      const kb_doc_id = document.getElementById("kb_doc_id");
+      const kb_doc_kind = document.getElementById("kb_doc_kind");
+      const kb_collection_target = document.getElementById("kb_collection_target");
+      const kb_ruleset = document.getElementById("kb_ruleset");
+      const kb_file = document.getElementById("kb_file");
+      const kb_upload_btn = document.getElementById("kb_upload_btn");
+      const kb_upload_bar = document.getElementById("kb_upload_bar");
+      const kb_upload_status = document.getElementById("kb_upload_status");
+      const kb_docs = document.getElementById("kb_docs");
+      const kb_refresh_btn = document.getElementById("kb_refresh_btn");
+      const kb_search_query = document.getElementById("kb_search_query");
+      const kb_search_type = document.getElementById("kb_search_type");
+      const kb_search_doc_kind = document.getElementById("kb_search_doc_kind");
+      const kb_search_collection = document.getElementById("kb_search_collection");
+      const kb_search_btn = document.getElementById("kb_search_btn");
+      const kb_search_status = document.getElementById("kb_search_status");
+      const kb_search_results = document.getElementById("kb_search_results");
+
+      // Memory UI elements
+      const mem_refresh_btn = document.getElementById("mem_refresh_btn");
+      const mem_clear_btn = document.getElementById("mem_clear_btn");
+      const mem_scope = document.getElementById("mem_scope");
+      const mem_session_id = document.getElementById("mem_session_id");
+      const mem_player_id = document.getElementById("mem_player_id");
+      const mem_list = document.getElementById("mem_list");
+
+      const DEFAULT_WS_PORT = 8765;
+      const AUDIO_IN_SAMPLE_RATE = 16000;
+
+      let ws = null;
+      let audioCtx = null;
+      let micStream = null;
+      let micSource = null;
+      let processor = null;
+      let zeroGain = null;
+
+      // We process mic audio once connected. VAD frames control utterance boundaries,
+      // and audio is only sent while "talking" (PTT held or Auto VAD active).
+      let audioSendEnabled = false;
+      let talking = false;
+      let audioOutPlayhead = 0;
+
+      // Buffer to send fixed-size PCM chunks (20ms @ 16kHz => 320 samples => 640 bytes)
+      const SEND_CHUNK_BYTES = 640;
+      let sendBuffer = new Uint8Array(0);
+
+      // Local debug stats (helps users self-diagnose voice issues).
+      let sentAudioFrames = 0;
+      let sentAudioBytes = 0;
+      let vadStarts = 0;
+      let vadStops = 0;
+      let awaitingTranscript = false;
+      let awaitingGM = false;
+      let transcriptWaitTimer = null;
+      let gmWaitTimer = null;
+      const TRANSCRIPT_TIMEOUT_MS = 12000;
+      const GM_TIMEOUT_MS = 20000;
+
+      // Auto VAD pre-roll: keep a short buffer of recent audio so we do not clip the first syllable.
+      const PRE_ROLL_BYTES = Math.floor(AUDIO_IN_SAMPLE_RATE * 2 * 0.45);
+      let preRollChunks = [];
+      let preRollBytes = 0;
+
+      // Safety: force-stop an utterance if we never see a pointer-up / silence.
+      const MAX_TALK_MS = 20000;
+      let maxTalkTimer = null;
+
+      function resetPreRoll() {
+        preRollChunks = [];
+        preRollBytes = 0;
+      }
+
+      function pushPreRoll(bytes) {
+        if (!bytes || bytes.length === 0) return;
+        preRollChunks.push(bytes);
+        preRollBytes += bytes.length;
+        while (preRollBytes > PRE_ROLL_BYTES && preRollChunks.length > 1) {
+          const b = preRollChunks.shift();
+          preRollBytes -= b.length;
+        }
+      }
+
+      function takePreRoll() {
+        if (preRollChunks.length === 0 || preRollBytes <= 0) return new Uint8Array(0);
+        const out = new Uint8Array(preRollBytes);
+        let off = 0;
+        for (const b of preRollChunks) {
+          out.set(b, off);
+          off += b.length;
+        }
+        resetPreRoll();
+        return out;
+      }
+
+      // Client-side VAD (simple energy threshold). The server still does the STT.
+      let vadMode = modeSel.value;
+      let vadThreshold = parseFloat(vadThresholdEl.value || "0.02");
+      let vadLevel = 0;
+      let vadStartCandidateAt = null;
+      let vadStopCandidateAt = null;
+
+      // Control RPC
+      const pending = new Map();
+      let currentSettings = null;
+      let kbDocsCache = [];
+      let setupSystemResults = [];
+      let elevenlabsVoicesCache = [];
+      let currentSecrets = {};
+      let wsConnectInFlight = false;
+
+      function nowMs() {
+        return performance.now();
+      }
+
+      function reqId() {
+        if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+        return Math.random().toString(16).slice(2) + String(Date.now());
+      }
+
+      function rpc(payload, timeoutMs = 15000) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          return Promise.reject(new Error("WebSocket not connected"));
+        }
+        const id = reqId();
+        const outbound = { ...(payload || {}), req_id: id };
+        ws.send(JSON.stringify(outbound));
+        return new Promise((resolve, reject) => {
+          const t = setTimeout(() => {
+            pending.delete(id);
+            reject(new Error("RPC timeout"));
+          }, timeoutMs);
+          pending.set(id, { resolve, reject, t });
+        });
+      }
+
+      function isWsOpen() {
+        return !!ws && ws.readyState === WebSocket.OPEN;
+      }
+
+      async function httpJson(method, path, body = null, timeoutMs = 15000) {
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), timeoutMs);
+        try {
+          const res = await fetch(path, {
+            method,
+            headers: body ? { "Content-Type": "application/json" } : undefined,
+            body: body ? JSON.stringify(body) : undefined,
+            signal: ctl.signal,
+          });
+          let payload = {};
+          try {
+            payload = await res.json();
+          } catch {
+            payload = {};
+          }
+          if (!res.ok) {
+            const err = payload && payload.error ? String(payload.error) : `HTTP ${res.status}`;
+            throw new Error(err);
+          }
+          return payload;
+        } finally {
+          clearTimeout(t);
+        }
+      }
+
+      async function controlCall(payload, timeoutMs = 15000) {
+        const t = String((payload && payload.type) || "").trim();
+
+        // HTTP-only control endpoints (available even without WS).
+        if (t === "elevenlabs_voices_list") {
+          return httpJson("GET", "/api/elevenlabs/voices", null, timeoutMs);
+        }
+
+        if (isWsOpen()) return rpc(payload, timeoutMs);
+
+        if (t === "settings_get") {
+          return httpJson("GET", "/api/settings", null, timeoutMs);
+        }
+        if (t === "settings_update") {
+          return httpJson("PATCH", "/api/settings", { patch: (payload && payload.patch) || {} }, timeoutMs);
+        }
+        if (t === "server_status") {
+          return httpJson("GET", "/api/server_status", null, timeoutMs);
+        }
+        if (t === "secrets_get") {
+          return httpJson("GET", "/api/secrets", null, timeoutMs);
+        }
+        if (t === "secrets_update") {
+          return httpJson(
+            "POST",
+            "/api/secrets",
+            {
+              updates: (payload && payload.updates) || {},
+              clear_keys: (payload && payload.clear_keys) || [],
+            },
+            timeoutMs
+          );
+        }
+        if (t === "setup_system_search") {
+          const q = encodeURIComponent(String((payload && payload.query) || "").trim());
+          const limit = encodeURIComponent(String((payload && payload.limit) || "8"));
+          return httpJson("GET", `/api/setup_system_search?query=${q}&limit=${limit}`, null, timeoutMs);
+        }
+        throw new Error(`Action '${t}' requires WebSocket connection.`);
+      }
+
+      function rejectAllPending(reason) {
+        for (const [id, p] of pending.entries()) {
+          try {
+            clearTimeout(p.t);
+            p.reject(new Error(reason || "WebSocket disconnected"));
+          } catch {}
+          pending.delete(id);
+        }
+      }
+
+      function updateVADUI(level) {
+        vadText.textContent = `VAD: ${level.toFixed(3)}`;
+        vadDot.classList.remove("ok", "bad");
+        if (talking) vadDot.classList.add("ok");
+      }
+
+      function updateNetStats() {
+        const kb = (sentAudioBytes / 1024).toFixed(1);
+        netStats.textContent = `sent audio: ${sentAudioFrames} frames (${kb} KB)  vad: ${vadStarts}/${vadStops}`;
+      }
+
+      function armTranscriptTimeout() {
+        awaitingTranscript = true;
+        if (transcriptWaitTimer) clearTimeout(transcriptWaitTimer);
+        transcriptWaitTimer = setTimeout(() => {
+          if (!awaitingTranscript) return;
+          addMsg(
+            "err",
+            "SYSTEM",
+            "No transcript received yet. If you are using a LAN IP, the microphone may be blocked. Try http://localhost:8000/."
+          );
+        }, TRANSCRIPT_TIMEOUT_MS);
+      }
+
+      function clearTranscriptTimeout() {
+        awaitingTranscript = false;
+        if (transcriptWaitTimer) clearTimeout(transcriptWaitTimer);
+        transcriptWaitTimer = null;
+      }
+
+      function armGMTimeout() {
+        awaitingGM = true;
+        if (gmWaitTimer) clearTimeout(gmWaitTimer);
+        gmWaitTimer = setTimeout(() => {
+          if (!awaitingGM) return;
+          addMsg("err", "SYSTEM", "No GM response yet. Check server logs for STT/TTS/LLM errors.");
+        }, GM_TIMEOUT_MS);
+      }
+
+      function clearGMTimeout() {
+        awaitingGM = false;
+        if (gmWaitTimer) clearTimeout(gmWaitTimer);
+        gmWaitTimer = null;
+      }
+
+      function setStatus(state, text) {
+        statusText.textContent = text;
+        statusDot.classList.remove("ok", "bad");
+        if (state === "ok") statusDot.classList.add("ok");
+        if (state === "bad") statusDot.classList.add("bad");
+      }
+
+      function addMsg(kind, who, text) {
+        const div = document.createElement("div");
+        div.className = "msg " + kind;
+        const h = document.createElement("div");
+        h.className = "who";
+        h.textContent = who;
+        const p = document.createElement("div");
+        p.textContent = text;
+        div.appendChild(h);
+        div.appendChild(p);
+        logEl.appendChild(div);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function addMemCard(entry) {
+        const div = document.createElement("div");
+        div.className = "msg gm";
+        const h = document.createElement("div");
+        h.className = "who";
+        h.textContent = entry.kind ? String(entry.kind).toUpperCase() : "MEMORY";
+        const p = document.createElement("div");
+        if (entry.kind === "turn") {
+          const who = entry.player_id ? String(entry.player_id).trim() : "";
+          const pt = (entry.player_text || "").trim();
+          const gt = (entry.gm_text || "").trim();
+          const fups = Array.isArray(entry.followups) ? entry.followups : [];
+          p.textContent = `${who || "PLAYER"}: ${pt}\n\nGM: ${gt}${fups.length ? `\n\nFOLLOWUPS:\n- ${fups.join("\n- ")}` : ""}`;
+        } else {
+          try {
+            p.textContent = JSON.stringify(entry, null, 2);
+          } catch {
+            p.textContent = String(entry);
+          }
+        }
+        p.style.whiteSpace = "pre-wrap";
+        div.appendChild(h);
+        div.appendChild(p);
+        mem_list.appendChild(div);
+      }
+
+      function bytesToBase64(bytes) {
+        let bin = "";
+        const CHUNK = 0x8000;
+        for (let i = 0; i < bytes.length; i += CHUNK) {
+          bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+        }
+        return btoa(bin);
+      }
+
+      function base64ToBytes(b64) {
+        const bin = atob(b64);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        return out;
+      }
+
+      function currentSpeakerId() {
+        if (activeSpeakerSel && String(activeSpeakerSel.value || "").trim()) {
+          return String(activeSpeakerSel.value).trim();
+        }
+        if (currentSettings && currentSettings.voice && String(currentSettings.voice.player_id || "").trim()) {
+          return String(currentSettings.voice.player_id).trim();
+        }
+        return "player1";
+      }
+
+      function downsampleBuffer(buffer, inRate, outRate) {
+        if (outRate === inRate) return buffer;
+        const ratio = inRate / outRate;
+        const newLen = Math.round(buffer.length / ratio);
+        const out = new Float32Array(newLen);
+        let offsetResult = 0;
+        let offsetBuffer = 0;
+        while (offsetResult < out.length) {
+          const nextOffsetBuffer = Math.round((offsetResult + 1) * ratio);
+          let acc = 0;
+          let count = 0;
+          for (let i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+            acc += buffer[i];
+            count++;
+          }
+          out[offsetResult] = count > 0 ? acc / count : 0;
+          offsetResult++;
+          offsetBuffer = nextOffsetBuffer;
+        }
+        return out;
+      }
+
+      function floatToPCM16(float32) {
+        const buf = new ArrayBuffer(float32.length * 2);
+        const view = new DataView(buf);
+        for (let i = 0; i < float32.length; i++) {
+          let s = Math.max(-1, Math.min(1, float32[i]));
+          view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+        }
+        return new Uint8Array(buf);
+      }
+
+      function enqueueSendBytes(bytes) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        const merged = new Uint8Array(sendBuffer.length + bytes.length);
+        merged.set(sendBuffer, 0);
+        merged.set(bytes, sendBuffer.length);
+        sendBuffer = merged;
+
+        while (sendBuffer.length >= SEND_CHUNK_BYTES) {
+          const chunk = sendBuffer.subarray(0, SEND_CHUNK_BYTES);
+          sendBuffer = sendBuffer.subarray(SEND_CHUNK_BYTES);
+          sentAudioFrames += 1;
+          sentAudioBytes += chunk.length;
+          updateNetStats();
+          ws.send(
+            JSON.stringify({
+              type: "audio_in",
+              sample_rate: AUDIO_IN_SAMPLE_RATE,
+              num_channels: 1,
+              audio: bytesToBase64(chunk),
+              user_id: currentSpeakerId(),
+            })
+          );
+        }
+      }
+
+      function flushSendBuffer() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        if (sendBuffer.length > 0) {
+          sentAudioFrames += 1;
+          sentAudioBytes += sendBuffer.length;
+          updateNetStats();
+          ws.send(
+            JSON.stringify({
+              type: "audio_in",
+              sample_rate: AUDIO_IN_SAMPLE_RATE,
+              num_channels: 1,
+              audio: bytesToBase64(sendBuffer),
+              user_id: currentSpeakerId(),
+            })
+          );
+          sendBuffer = new Uint8Array(0);
+        }
+      }
+
+      function playPCM16(base64Audio, sampleRate) {
+        if (!audioCtx) return;
+        const bytes = base64ToBytes(base64Audio);
+        const samples = new Int16Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.byteLength / 2));
+        const floats = new Float32Array(samples.length);
+        for (let i = 0; i < samples.length; i++) {
+          floats[i] = samples[i] / 32768;
+        }
+        const buf = audioCtx.createBuffer(1, floats.length, sampleRate);
+        buf.getChannelData(0).set(floats);
+
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        src.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if (audioOutPlayhead < now + 0.05) audioOutPlayhead = now + 0.05;
+        src.start(audioOutPlayhead);
+        audioOutPlayhead += buf.duration;
+      }
+
+      async function ensureAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      async function startMicProcessing() {
+        await ensureAudio();
+        if (micStream) return;
+
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micSource = audioCtx.createMediaStreamSource(micStream);
+
+        zeroGain = audioCtx.createGain();
+        zeroGain.gain.value = 0;
+
+        processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        processor.onaudioprocess = (e) => {
+          if (!audioSendEnabled) return;
+          const input = e.inputBuffer.getChannelData(0);
+          const down = downsampleBuffer(input, audioCtx.sampleRate, AUDIO_IN_SAMPLE_RATE);
+
+          let sum = 0;
+          for (let i = 0; i < down.length; i++) sum += down[i] * down[i];
+          const rms = Math.sqrt(sum / Math.max(1, down.length));
+          vadLevel = vadLevel * 0.85 + rms * 0.15;
+          updateVADUI(vadLevel);
+
+          const pcm16 = floatToPCM16(down);
+          if (talking) {
+            enqueueSendBytes(pcm16);
+          } else if (vadMode === "auto") {
+            pushPreRoll(pcm16);
+          }
+
+          if (vadMode === "auto") {
+            autoVADTick(vadLevel);
+          }
+        };
+
+        micSource.connect(processor);
+        processor.connect(zeroGain);
+        zeroGain.connect(audioCtx.destination);
+      }
+
+      async function stopMicProcessing() {
+        if (processor) {
+          processor.disconnect();
+          processor.onaudioprocess = null;
+          processor = null;
+        }
+        if (micSource) {
+          micSource.disconnect();
+          micSource = null;
+        }
+        if (zeroGain) {
+          zeroGain.disconnect();
+          zeroGain = null;
+        }
+        if (micStream) {
+          micStream.getTracks().forEach((t) => t.stop());
+          micStream = null;
+        }
+      }
+
+      function wsDefaultUrl() {
+        const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        let host = window.location.hostname || "localhost";
+        // 0.0.0.0 isn't a routable destination for clients; treat it as localhost.
+        if (host === "0.0.0.0") host = "127.0.0.1";
+        // Prefer IPv4 loopback to avoid IPv6-only localhost resolution issues.
+        if (host === "localhost") host = "127.0.0.1";
+        // IPv6 literals must be wrapped in brackets for ws:// URLs.
+        const hostForUrl = host.includes(":") ? `[${host}]` : host;
+        const saved = localStorage.getItem("vgm_ws_url");
+        if (saved) return saved;
+        const port = String(window.location.port || "");
+        const isLocalUi = port === "8000" || host === "127.0.0.1" || host === "::1";
+        if (isLocalUi) {
+          return `${scheme}://${hostForUrl}:${DEFAULT_WS_PORT}`;
+        }
+        // Production/reverse-proxy default: same domain path.
+        return `${scheme}://${hostForUrl}/ws`;
+      }
+
+      function setActiveTab(name) {
+        tabButtons.forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+        Object.entries(panels).forEach(([k, el]) => {
+          const show = k === name || (name === "settings" && (k === "knowledge" || k === "memory"));
+          el.classList.toggle("active", show);
+        });
+      }
+
+      tabButtons.forEach((b) => {
+        b.addEventListener("click", () => setActiveTab(b.dataset.tab));
+      });
+
+      wsUrlEl.value = wsDefaultUrl();
+      vadThresholdVal.textContent = `(${vadThreshold.toFixed(3)})`;
+      updateVADUI(0);
+      updateNetStats();
+      updateRulebookSourceUI();
+      updateSetupRulebookUI();
+      updateSecretInputState();
+      renderSetupSystemResults([]);
+
+      // Setup/Advanced settings can be edited and saved even while disconnected.
+      settingsSaveBtn.disabled = false;
+      setupApplyBtn.disabled = false;
+      setupAiBtn.disabled = false;
+      setupSaveKeysBtn.disabled = false;
+      setupWizardBtn.disabled = false;
+      setupReconnectBtn.disabled = true;
+      activeSpeakerSel.disabled = false;
+      setupSystemSearchBtn.disabled = !setup_system_query.value.trim();
+
+      (async () => {
+        try {
+          const st = await controlCall({ type: "server_status" }, 7000);
+          if (st && st.settings) setSettingsForm(st.settings);
+        } catch {}
+        try {
+          const s = await controlCall({ type: "settings_get" }, 7000);
+          if (s && s.settings) setSettingsForm(s.settings);
+        } catch {}
+        try {
+          await refreshSecrets();
+        } catch {}
+        try {
+          const needsEleven =
+            setup_tts_provider.value === "elevenlabs" || set_tts_provider.value === "elevenlabs";
+          const hasKey =
+            currentSecrets &&
+            currentSecrets.ELEVENLABS_API_KEY &&
+            currentSecrets.ELEVENLABS_API_KEY.present;
+          if (needsEleven && hasKey) {
+            await loadElevenlabsVoices();
+          }
+        } catch {}
+      })();
+
+      if (!window.isSecureContext) {
+        addMsg(
+          "err",
+          "ERROR",
+          "This page is not a secure context. Microphone access may be blocked. Use http://localhost:8000/ or HTTPS."
+        );
+      }
+
+      clearBtn.addEventListener("click", () => {
+        logEl.innerHTML = "";
+      });
+
+      modeSel.addEventListener("change", () => {
+        vadMode = modeSel.value;
+        if (talking) stopTalk();
+        resetPreRoll();
+        pttBtn.disabled = !ws || ws.readyState !== WebSocket.OPEN || vadMode !== "ptt";
+        pttBtn.textContent = vadMode === "ptt" ? "Hold To Talk" : "Auto VAD Active";
+      });
+
+      vadThresholdEl.addEventListener("input", () => {
+        vadThreshold = parseFloat(vadThresholdEl.value || "0.02");
+        vadThresholdVal.textContent = `(${vadThreshold.toFixed(3)})`;
+      });
+
+      kb_file.addEventListener("change", () => {
+        const f = kb_file.files && kb_file.files[0];
+        kb_upload_btn.disabled = !f || !ws || ws.readyState !== WebSocket.OPEN;
+        if (f && !kb_doc_id.value.trim()) {
+          const base = f.name.replace(/\\.[^.]+$/, "").replace(/[^a-zA-Z0-9_\\-]+/g, "_").slice(0, 42);
+          kb_doc_id.value = base + "_" + Math.random().toString(16).slice(2, 6);
+        }
+      });
+
+      function setRecentSelect(selectEl, items, currentValue) {
+        if (!selectEl) return;
+        const cur = String(currentValue || "").trim();
+        const xs = Array.isArray(items) ? items.map((x) => String(x || "").trim()).filter(Boolean) : [];
+        const uniq = [];
+        const seen = new Set();
+        for (const x of xs) {
+          if (seen.has(x)) continue;
+          seen.add(x);
+          uniq.push(x);
+        }
+
+        // Ensure current is visible even if settings are from an older server version.
+        if (cur && !seen.has(cur)) uniq.unshift(cur);
+
+        selectEl.innerHTML = "";
+        if (uniq.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "(none yet)";
+          opt.disabled = true;
+          opt.selected = true;
+          selectEl.appendChild(opt);
+          return;
+        }
+
+        for (const x of uniq.slice(0, 10)) {
+          const opt = document.createElement("option");
+          opt.value = x;
+          opt.textContent = x;
+          if (cur && x === cur) opt.selected = true;
+          selectEl.appendChild(opt);
+        }
+      }
+
+      function setDatalistOptions(listId, values) {
+        const dl = document.getElementById(listId);
+        if (!dl) return;
+        const seen = new Set();
+        const opts = [];
+        for (const v of Array.isArray(values) ? values : []) {
+          const s = String(v || "").trim();
+          if (!s || seen.has(s)) continue;
+          seen.add(s);
+          opts.push(s);
+        }
+        dl.innerHTML = "";
+        for (const s of opts) {
+          const opt = document.createElement("option");
+          opt.value = s;
+          dl.appendChild(opt);
+        }
+      }
+
+      function encodePlayerProfiles(profiles) {
+        const xs = Array.isArray(profiles) ? profiles : [];
+        const lines = [];
+        for (const p of xs) {
+          const pid = String((p && p.player_id) || "").trim();
+          if (!pid) continue;
+          const dn = String((p && p.display_name) || "").trim();
+          const vp = String((p && p.voice_profile) || "").trim();
+          lines.push([pid, dn, vp].join(" | "));
+        }
+        return lines.join("\n");
+      }
+
+      function parsePlayerProfiles(text) {
+        const rows = String(text || "").split(/\r?\n/);
+        const out = [];
+        const seen = new Set();
+        for (const row of rows) {
+          const line = String(row || "").trim();
+          if (!line) continue;
+          const parts = line.split("|");
+          let pid = String(parts[0] || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9_-]+/g, "_")
+            .replace(/^_+|_+$/g, "")
+            .slice(0, 32);
+          if (!pid || seen.has(pid)) continue;
+          seen.add(pid);
+          const display_name = String(parts[1] || "")
+            .trim()
+            .slice(0, 64);
+          const voice_profile = String(parts.slice(2).join("|") || "")
+            .trim()
+            .slice(0, 120);
+          out.push({ player_id: pid, display_name, voice_profile });
+          if (out.length >= 8) break;
+        }
+        if (out.length === 0) {
+          out.push({ player_id: "player1", display_name: "Player 1", voice_profile: "" });
+        }
+        return out;
+      }
+
+      function populateActiveSpeakerDropdown(s) {
+        const profiles = (s && s.voice && Array.isArray(s.voice.player_profiles)) ? s.voice.player_profiles : [];
+        const active = String((s && s.voice && (s.voice.active_player_id || s.voice.player_id)) || "player1").trim();
+        activeSpeakerSel.innerHTML = "";
+        for (const p of profiles.slice(0, 8)) {
+          const pid = String((p && p.player_id) || "").trim();
+          if (!pid) continue;
+          const dn = String((p && p.display_name) || "").trim();
+          const vp = String((p && p.voice_profile) || "").trim();
+          const opt = document.createElement("option");
+          opt.value = pid;
+          opt.textContent = vp ? `${dn || pid} (${pid}) - ${vp}` : `${dn || pid} (${pid})`;
+          if (pid === active) opt.selected = true;
+          activeSpeakerSel.appendChild(opt);
+        }
+        if (!activeSpeakerSel.options.length) {
+          const opt = document.createElement("option");
+          opt.value = "player1";
+          opt.textContent = "Player 1 (player1)";
+          activeSpeakerSel.appendChild(opt);
+        }
+        activeSpeakerSel.value = activeSpeakerSel.value || "player1";
+      }
+
+      function populateRulebookDocChoice(docs, selectedDocId) {
+        const list = Array.isArray(docs) ? docs : [];
+        const selected = String(selectedDocId || "").trim();
+        set_primary_rulebook_doc_choice.innerHTML = "";
+
+        const first = document.createElement("option");
+        first.value = "";
+        first.textContent = "(select a document)";
+        set_primary_rulebook_doc_choice.appendChild(first);
+
+        for (const d of list) {
+          const did = String((d && d.doc_id) || "").trim();
+          if (!did) continue;
+          const kind = String((d && d.doc_kind) || "").trim();
+          const st = String((d && d.status) || "").trim();
+          const file = String((d && d.filename) || did).trim();
+          const opt = document.createElement("option");
+          opt.value = did;
+          opt.textContent = `${did} • ${file}${kind ? " • " + kind : ""}${st ? " • " + st : ""}`;
+          if (selected && selected === did) opt.selected = true;
+          set_primary_rulebook_doc_choice.appendChild(opt);
+        }
+
+        if (selected) set_primary_rulebook_doc_choice.value = selected;
+      }
+
+      function updateRulebookSourceUI() {
+        const useDoc = set_primary_rulebook_source.value === "doc";
+        set_primary_rulebook_doc_choice.disabled = !useDoc;
+        set_primary_rulebook_path.disabled = useDoc;
+      }
+
+      function updateSetupRulebookUI() {
+        const useDoc = setup_rulebook_source.value === "doc";
+        setup_rulebook_doc.disabled = !useDoc;
+        setup_rulebook_path.disabled = useDoc;
+      }
+
+      function normalizeDocId(value, fallback = "rulebook") {
+        const v = String(value || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, "_")
+          .replace(/^_+|_+$/g, "")
+          .slice(0, 64);
+        return v || fallback;
+      }
+
+      function updateSecretInputState() {
+        setup_openai_api_key.disabled = setup_openai_key_action.value !== "set";
+        setup_deepgram_api_key.disabled = setup_deepgram_key_action.value !== "set";
+        setup_elevenlabs_api_key.disabled = setup_elevenlabs_key_action.value !== "set";
+        setup_openai_base_url.disabled = setup_openai_base_action.value !== "set";
+      }
+
+      function renderSecretsSummary(secrets) {
+        currentSecrets = secrets || {};
+        const parts = [];
+        const openai = currentSecrets.OPENAI_API_KEY || {};
+        const deepgram = currentSecrets.DEEPGRAM_API_KEY || {};
+        const eleven = currentSecrets.ELEVENLABS_API_KEY || {};
+        const base = currentSecrets.OPENAI_BASE_URL || {};
+        parts.push(`OpenAI key: ${openai.present ? "configured" : "missing"}`);
+        parts.push(`Deepgram key: ${deepgram.present ? "configured" : "missing"}`);
+        parts.push(`ElevenLabs key: ${eleven.present ? "configured" : "missing"}`);
+        parts.push(`Base URL: ${base.present ? (base.masked || "custom") : "default"}`);
+        setupSecretsSummary.textContent = parts.join(" | ");
+      }
+
+      function updateSetupTtsUI() {
+        const useEleven = setup_tts_provider.value === "elevenlabs";
+        setup_elevenlabs_voice.disabled = !useEleven;
+        setup_elevenlabs_voice_id.disabled = !useEleven;
+        setupRefreshVoicesBtn.disabled = !useEleven;
+      }
+
+      function updateAdvancedTtsUI() {
+        const useEleven = set_tts_provider.value === "elevenlabs";
+        set_elevenlabs_voice.disabled = !useEleven;
+        set_elevenlabs_voice_id.disabled = !useEleven;
+        setRefreshVoicesBtn.disabled = !useEleven;
+      }
+
+      function hasSelectOptionValue(selEl, value) {
+        const wanted = String(value || "").trim();
+        if (!selEl || !wanted) return false;
+        return Array.from(selEl.options || []).some((opt) => String((opt && opt.value) || "").trim() === wanted);
+      }
+
+      function isLikelyOpenAiVoicePreset(value) {
+        const v = String(value || "").trim().toLowerCase();
+        return ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"].includes(v);
+      }
+
+      function renderElevenlabsVoiceSelects(voices, selectedId) {
+        elevenlabsVoicesCache = Array.isArray(voices) ? voices : [];
+        const selected = String(selectedId || "").trim();
+
+        function fill(selEl) {
+          selEl.innerHTML = "";
+          const first = document.createElement("option");
+          first.value = "";
+          first.textContent = elevenlabsVoicesCache.length ? "(select voice)" : "(no voices)";
+          selEl.appendChild(first);
+          for (const v of elevenlabsVoicesCache) {
+            const vid = String((v && v.voice_id) || "").trim();
+            if (!vid) continue;
+            const name = String((v && v.name) || vid).trim();
+            const cat = String((v && v.category) || "").trim();
+            const opt = document.createElement("option");
+            opt.value = vid;
+            opt.textContent = `${name}${cat ? " • " + cat : ""}`;
+            if (selected && selected === vid) opt.selected = true;
+            selEl.appendChild(opt);
+          }
+          if (selected && !selEl.value) selEl.value = selected;
+        }
+
+        fill(setup_elevenlabs_voice);
+        fill(set_elevenlabs_voice);
+      }
+
+      async function loadElevenlabsVoices() {
+        try {
+          const res = await controlCall({ type: "elevenlabs_voices_list" }, 15000);
+          const setupVoiceId = String(setup_elevenlabs_voice_id.value || "").trim();
+          const advancedVoiceId = String(set_elevenlabs_voice_id.value || "").trim();
+          const ttsVoiceRaw = String(set_tts_voice.value || "").trim();
+          const ttsVoice = isLikelyOpenAiVoicePreset(ttsVoiceRaw) ? "" : ttsVoiceRaw;
+          const selected =
+            String((set_tts_provider.value === "elevenlabs" ? advancedVoiceId : "") || "").trim() ||
+            String((setup_tts_provider.value === "elevenlabs" ? setupVoiceId : "") || "").trim() ||
+            String((set_tts_provider.value === "elevenlabs" ? set_elevenlabs_voice.value : "") || "").trim() ||
+            String((set_tts_provider.value === "elevenlabs" ? ttsVoice : "") || "").trim() ||
+            String((setup_tts_provider.value === "elevenlabs" ? setup_elevenlabs_voice.value : "") || "").trim();
+          renderElevenlabsVoiceSelects((res && res.voices) || [], selected);
+        } catch (e) {
+          renderElevenlabsVoiceSelects([], "");
+          addMsg("err", "ERROR", `ElevenLabs voices load failed: ${String(e)}`);
+        }
+      }
+
+      function renderSetupSystemResults(results) {
+        setupSystemResults = Array.isArray(results) ? results : [];
+        setup_system_result.innerHTML = "";
+        const first = document.createElement("option");
+        first.value = "";
+        first.textContent = setupSystemResults.length ? "(select a result)" : "(no results)";
+        setup_system_result.appendChild(first);
+        for (const item of setupSystemResults) {
+          const opt = document.createElement("option");
+          const id = String((item && item.id) || "").trim();
+          const name = String((item && item.name) || "unknown");
+          const source = String((item && item.source) || "");
+          const ruleset = String((item && item.ruleset) || "");
+          opt.value = id;
+          opt.textContent = `${name}${ruleset ? " • " + ruleset : ""}${source ? " • " + source : ""}`;
+          setup_system_result.appendChild(opt);
+        }
+        setupSystemUseBtn.disabled = setupSystemResults.length === 0;
+        setupSystemHint.textContent = "";
+      }
+
+      function selectedSetupSystemResult() {
+        const sid = String(setup_system_result.value || "").trim();
+        if (!sid) return null;
+        return setupSystemResults.find((x) => String((x && x.id) || "").trim() === sid) || null;
+      }
+
+      function updateSetupSystemHintFromSelection() {
+        const item = selectedSetupSystemResult();
+        if (!item) {
+          setupSystemHint.textContent = "";
+          return;
+        }
+        const summary = String((item && item.summary) || "").trim();
+        const hint = String((item && item.beginner_hint) || "").trim();
+        const url = String((item && item.url) || "").trim();
+        const bits = [];
+        if (summary) bits.push(summary);
+        if (hint) bits.push(`Hint: ${hint}`);
+        if (url) bits.push(url);
+        setupSystemHint.textContent = bits.join(" ");
+      }
+
+      function inferSetupSystemFromRuleset(ruleset) {
+        const r = String(ruleset || "").trim().toLowerCase();
+        if (r.includes("numenera")) return "numenera";
+        if (r.includes("dnd") || r.includes("5e")) return "dnd5e";
+        if (r.includes("pf2") || r.includes("pathfinder")) return "pf2e";
+        return "generic";
+      }
+
+      function setupRulesetFromSystem(system) {
+        if (system === "numenera") return "numenera";
+        if (system === "dnd5e") return "dnd5e";
+        if (system === "pf2e") return "pf2e";
+        return "generic";
+      }
+
+      function setupBuildPlayerProfiles(count) {
+        const n = Math.max(1, Math.min(8, parseInt(String(count || "1"), 10) || 1));
+        const out = [];
+        for (let i = 1; i <= n; i++) {
+          out.push({ player_id: `player${i}`, display_name: `Player ${i}`, voice_profile: "" });
+        }
+        return out;
+      }
+
+      function setupPopulateActivePlayers(count, selected) {
+        const n = Math.max(1, Math.min(8, parseInt(String(count || "1"), 10) || 1));
+        const sel = String(selected || `player1`).trim();
+        setup_active_player.innerHTML = "";
+        for (let i = 1; i <= n; i++) {
+          const pid = `player${i}`;
+          const opt = document.createElement("option");
+          opt.value = pid;
+          opt.textContent = `Player ${i} (${pid})`;
+          if (pid === sel) opt.selected = true;
+          setup_active_player.appendChild(opt);
+        }
+        if (!setup_active_player.value) setup_active_player.value = "player1";
+      }
+
+      function populateSetupRulebookDocs(docs, selectedDocId) {
+        const list = Array.isArray(docs) ? docs : [];
+        const selected = String(selectedDocId || "").trim();
+        setup_rulebook_doc.innerHTML = "";
+        const first = document.createElement("option");
+        first.value = "";
+        first.textContent = "(none)";
+        setup_rulebook_doc.appendChild(first);
+        for (const d of list) {
+          const did = String((d && d.doc_id) || "").trim();
+          if (!did) continue;
+          const file = String((d && d.filename) || did).trim();
+          const st = String((d && d.status) || "").trim();
+          const opt = document.createElement("option");
+          opt.value = did;
+          opt.textContent = `${did} • ${file}${st ? " • " + st : ""}`;
+          if (selected && selected === did) opt.selected = true;
+          setup_rulebook_doc.appendChild(opt);
+        }
+        if (selected) setup_rulebook_doc.value = selected;
+      }
+
+      function setupQuickPatch() {
+        const sourceSelected = String(setup_rulebook_source.value || "doc").trim();
+        const selectedDoc = String(setup_rulebook_doc.value || "").trim();
+        const selectedPath = String(setup_rulebook_path.value || "").trim();
+        const languageMode = String(setup_language_mode.value || "player").trim();
+        const locale = String(setup_locale.value || "en-US").trim();
+        const system = String(setup_system.value || "generic").trim();
+        const ruleset = String(setup_ruleset_tag.value || "").trim() || setupRulesetFromSystem(system);
+        const setupTtsProvider = String(setup_tts_provider.value || "openai").trim();
+        const currentTtsModel =
+          (currentSettings && currentSettings.openai && String(currentSettings.openai.tts_model || "").trim()) ||
+          "";
+        const currentTtsVoiceRaw =
+          (currentSettings && currentSettings.openai && String(currentSettings.openai.tts_voice || "").trim()) ||
+          "";
+        const currentTtsVoice =
+          setupTtsProvider === "elevenlabs" && isLikelyOpenAiVoicePreset(currentTtsVoiceRaw)
+            ? ""
+            : currentTtsVoiceRaw;
+        const setupManualVoiceId = String(setup_elevenlabs_voice_id.value || "").trim();
+        const setupTtsVoice =
+          setupTtsProvider === "elevenlabs"
+            ? setupManualVoiceId || String(setup_elevenlabs_voice.value || "").trim() || currentTtsVoice
+            : currentTtsVoice || "alloy";
+        const setupTtsModel =
+          setupTtsProvider === "elevenlabs"
+            ? (!currentTtsModel || currentTtsModel.startsWith("gpt-")
+                ? "eleven_turbo_v2_5"
+                : currentTtsModel)
+            : (!currentTtsModel || currentTtsModel.startsWith("eleven_")
+                ? "gpt-4o-mini-tts"
+                : currentTtsModel);
+        const count = Math.max(1, Math.min(8, parseInt(String(setup_player_count.value || "1"), 10) || 1));
+        const active = String(setup_active_player.value || "player1").trim();
+        const profiles = setupBuildPlayerProfiles(count);
+        const activeSafe = profiles.some((p) => p.player_id === active) ? active : profiles[0].player_id;
+        const hasDoc = !!selectedDoc;
+        const hasPath = !!selectedPath;
+        let resolvedSource = sourceSelected === "path" ? "path" : "doc";
+        if (hasDoc) resolvedSource = "doc";
+        else if (hasPath) resolvedSource = "path";
+        const useDoc = resolvedSource === "doc" && hasDoc;
+        const usePath = resolvedSource === "path" && hasPath;
+
+        const selectedDocMeta = (kbDocsCache || []).find((d) => String(d.doc_id || "") === selectedDoc) || null;
+        const selectedDocKind = selectedDocMeta && selectedDocMeta.doc_kind ? String(selectedDocMeta.doc_kind) : "rulebook";
+        const selectedTarget =
+          selectedDocMeta && selectedDocMeta.collection_target ? String(selectedDocMeta.collection_target) : "game";
+        const pathDocId = normalizeDocId(selectedPath.replace(/\\.[^.]+$/, ""), "rulebook");
+
+        return {
+          voice: {
+            locale,
+            player_profiles: profiles,
+            active_player_id: activeSafe,
+            player_id: activeSafe,
+          },
+          openai: {
+            stt_provider: setup_stt_provider.value || "deepgram",
+            tts_provider: setupTtsProvider,
+            stt_model:
+              (setup_stt_provider.value || "deepgram") === "deepgram"
+                ? "nova-3-general"
+                : "gpt-4o-transcribe",
+            tts_model: setupTtsModel,
+            tts_voice: setupTtsVoice,
+          },
+          knowledge: {
+            enabled:
+              useDoc || usePath
+                ? true
+                : (currentSettings && currentSettings.knowledge && currentSettings.knowledge.enabled) || false,
+            primary_rulebook_source: useDoc
+              ? "doc"
+              : usePath
+                ? "path"
+                : ((currentSettings && currentSettings.knowledge && currentSettings.knowledge.primary_rulebook_source) || "path"),
+            primary_rulebook_doc_choice: useDoc ? selectedDoc : "",
+            primary_rulebook_path: usePath
+              ? selectedPath
+              : (currentSettings && currentSettings.knowledge && currentSettings.knowledge.primary_rulebook_path) || "",
+            primary_rulebook_doc_id: useDoc
+              ? selectedDoc
+              : (usePath
+                ? pathDocId
+                : (
+                (currentSettings && currentSettings.knowledge && currentSettings.knowledge.primary_rulebook_doc_id) ||
+                "rulebook")),
+            primary_rulebook_doc_kind: useDoc
+              ? selectedDocKind
+              : (usePath
+                ? "rulebook"
+                : (currentSettings &&
+                    currentSettings.knowledge &&
+                    currentSettings.knowledge.primary_rulebook_doc_kind) ||
+                  "rulebook"),
+            primary_rulebook_collection_target: useDoc
+              ? selectedTarget
+              : (usePath
+                ? "game"
+                : (currentSettings &&
+                    currentSettings.knowledge &&
+                    currentSettings.knowledge.primary_rulebook_collection_target) ||
+                  "game"),
+            primary_rulebook_ruleset: ruleset,
+            primary_rulebook_auto_activate: true,
+            primary_rulebook_auto_ingest: true,
+            active_doc_ids: useDoc
+              ? [selectedDoc]
+              : (usePath
+                ? [pathDocId]
+                : ((currentSettings && currentSettings.knowledge && currentSettings.knowledge.active_doc_ids) || [])),
+          },
+          prompts: {
+            response_language_mode: languageMode,
+          },
+        };
+      }
+
+      function setSettingsForm(s) {
+        currentSettings = s;
+        set_campaign_id.value = s.voice.campaign_id || "";
+        set_session_id.value = s.voice.session_id || "";
+        set_player_id.value = s.voice.player_id || "";
+        set_locale.value = s.voice.locale || "";
+        set_player_profiles.value = encodePlayerProfiles((s.voice && s.voice.player_profiles) || []);
+        setRecentSelect(recent_campaigns, (s.voice && s.voice.recent_campaigns) || [], s.voice.campaign_id);
+        setRecentSelect(recent_players, (s.voice && s.voice.recent_players) || [], s.voice.player_id);
+        populateActiveSpeakerDropdown(s);
+        set_ws_host.value = s.voice.ws_host || "";
+        set_ws_port.value = String(s.voice.ws_port || 8765);
+        set_http_host.value = s.voice.http_host || "";
+        set_http_port.value = String(s.voice.http_port || 8000);
+        if (s.voice && s.voice.ws_session_timeout_secs != null) {
+          // no dedicated UI field yet, but keep compatibility in settings payloads.
+        }
+
+        set_llm_model.value = s.openai.llm_model || "";
+        set_stt_provider.value = s.openai.stt_provider || "openai";
+        set_tts_provider.value = s.openai.tts_provider || "openai";
+        set_stt_model.value = s.openai.stt_model || "";
+        set_tts_model.value = s.openai.tts_model || "";
+        set_tts_voice.value = s.openai.tts_voice || "";
+        set_elevenlabs_voice.value = s.openai.tts_voice || "";
+        setup_elevenlabs_voice.value = s.openai.tts_voice || "";
+        set_elevenlabs_voice_id.value = s.openai.tts_voice || "";
+        setup_elevenlabs_voice_id.value = s.openai.tts_voice || "";
+        set_embedding_model.value = s.openai.embedding_model || "";
+        setDatalistOptions("llm_models", s.openai.llm_model_options || []);
+        setDatalistOptions("stt_models", s.openai.stt_model_options || []);
+        setDatalistOptions("tts_models", s.openai.tts_model_options || []);
+        setDatalistOptions("embedding_models", s.openai.embedding_model_options || []);
+
+        set_kb_enabled.value = s.knowledge.enabled ? "true" : "false";
+        set_kb_top_k.value = String(s.knowledge.top_k || 5);
+        set_kb_backend.value = s.knowledge.backend || "local";
+        set_kb_local_path.value = s.knowledge.local_path || "data/qdrant_local";
+        set_qdrant_url.value = s.knowledge.qdrant_url || "";
+        set_qdrant_collection.value = s.knowledge.collection || "";
+        set_kb_split_collections.value = s.knowledge.split_collections ? "true" : "false";
+        set_qdrant_collection_game.value = s.knowledge.game_collection || "gm_knowledge_game";
+        set_qdrant_collection_guidance.value = s.knowledge.guidance_collection || "gm_knowledge_guidance";
+        set_chunk_max_chars.value = String(s.knowledge.chunk_max_chars || 1200);
+        set_chunk_overlap.value = String(s.knowledge.chunk_overlap || 120);
+        set_primary_rulebook_source.value = s.knowledge.primary_rulebook_source || "path";
+        populateRulebookDocChoice(
+          kbDocsCache,
+          s.knowledge.primary_rulebook_doc_choice || s.knowledge.primary_rulebook_doc_id || ""
+        );
+        set_primary_rulebook_doc_choice.value =
+          s.knowledge.primary_rulebook_doc_choice || s.knowledge.primary_rulebook_doc_id || "";
+        set_primary_rulebook_path.value = s.knowledge.primary_rulebook_path || "";
+        updateRulebookSourceUI();
+        set_primary_rulebook_doc_id.value = s.knowledge.primary_rulebook_doc_id || "";
+        set_primary_rulebook_ruleset.value = s.knowledge.primary_rulebook_ruleset || "";
+        set_primary_rulebook_doc_kind.value = s.knowledge.primary_rulebook_doc_kind || "rulebook";
+        set_primary_rulebook_collection_target.value =
+          s.knowledge.primary_rulebook_collection_target || "game";
+        set_primary_rulebook_auto_ingest.value = s.knowledge.primary_rulebook_auto_ingest ? "true" : "false";
+        set_primary_rulebook_auto_activate.value = s.knowledge.primary_rulebook_auto_activate ? "true" : "false";
+
+        set_intent_system.value = s.prompts.intent_classify_system || "";
+        set_resolve_system.value = s.prompts.resolve_system || "";
+        set_resolve_user.value = s.prompts.resolve_user_template || "";
+        set_include_memory.value = s.prompts.include_memory ? "true" : "false";
+        set_memory_turns.value = String(s.prompts.memory_turns || 0);
+        set_response_language_mode.value = s.prompts.response_language_mode || "player";
+
+        mem_session_id.value = s.voice.session_id || "";
+        mem_player_id.value = s.voice.player_id || "";
+
+        const profiles = (s.voice && Array.isArray(s.voice.player_profiles)) ? s.voice.player_profiles : [];
+        const playerCount = Math.max(1, Math.min(8, profiles.length || 1));
+        setup_player_count.value = String(playerCount);
+        setupPopulateActivePlayers(playerCount, s.voice.active_player_id || s.voice.player_id || "player1");
+        setup_locale.value = s.voice.locale || "en-US";
+        setup_language_mode.value = (s.prompts && s.prompts.response_language_mode) || "player";
+        setup_stt_provider.value = (s.openai && s.openai.stt_provider) || "openai";
+        setup_tts_provider.value = (s.openai && s.openai.tts_provider) || "openai";
+        setup_system.value = inferSetupSystemFromRuleset(s.knowledge.primary_rulebook_ruleset || "");
+        setup_ruleset_tag.value = s.knowledge.primary_rulebook_ruleset || "";
+        setup_rulebook_source.value = s.knowledge.primary_rulebook_source || "doc";
+        populateSetupRulebookDocs(
+          kbDocsCache,
+          s.knowledge.primary_rulebook_doc_choice || s.knowledge.primary_rulebook_doc_id || ""
+        );
+        setup_rulebook_doc.value = s.knowledge.primary_rulebook_doc_choice || s.knowledge.primary_rulebook_doc_id || "";
+        setup_rulebook_path.value = s.knowledge.primary_rulebook_path || "";
+        updateSetupRulebookUI();
+        updateSetupTtsUI();
+        updateAdvancedTtsUI();
+        const selectedVoice = String((s.openai && s.openai.tts_voice) || "").trim();
+        if (selectedVoice && elevenlabsVoicesCache.length) {
+          setup_elevenlabs_voice.value = selectedVoice;
+          set_elevenlabs_voice.value = selectedVoice;
+        }
+      }
+
+      function getSettingsPatchFromForm() {
+        const s = currentSettings || {};
+        const active_doc_ids = (s.knowledge && Array.isArray(s.knowledge.active_doc_ids)) ? s.knowledge.active_doc_ids : [];
+        const provider = set_tts_provider.value || "openai";
+        const currentSavedVoiceRaw = (s && s.openai && String(s.openai.tts_voice || "").trim()) || "";
+        const currentSavedVoice =
+          provider === "elevenlabs" && isLikelyOpenAiVoicePreset(currentSavedVoiceRaw)
+            ? ""
+            : currentSavedVoiceRaw;
+        const selectedElevenVoiceRaw =
+          set_elevenlabs_voice_id.value.trim() ||
+          set_elevenlabs_voice.value.trim() ||
+          set_tts_voice.value.trim();
+        const selectedElevenVoice = isLikelyOpenAiVoicePreset(selectedElevenVoiceRaw) ? "" : selectedElevenVoiceRaw;
+        return {
+          voice: {
+            campaign_id: set_campaign_id.value.trim() || "demo",
+            session_id: set_session_id.value.trim() || "ws",
+            player_id: set_player_id.value.trim() || "player1",
+            active_player_id:
+              (activeSpeakerSel && activeSpeakerSel.value ? activeSpeakerSel.value : set_player_id.value).trim() ||
+              "player1",
+            player_profiles: parsePlayerProfiles(set_player_profiles.value || ""),
+            locale: set_locale.value.trim() || "en-US",
+            ws_host: set_ws_host.value.trim() || "0.0.0.0",
+            ws_port: Math.max(1, parseInt(set_ws_port.value || "8765", 10)),
+            http_host: set_http_host.value.trim() || "0.0.0.0",
+            http_port: Math.max(1, parseInt(set_http_port.value || "8000", 10)),
+          },
+          openai: {
+            stt_provider: set_stt_provider.value || "openai",
+            tts_provider: provider,
+            llm_model: set_llm_model.value.trim() || "gpt-4o-mini",
+            stt_model: set_stt_model.value.trim() || "gpt-4o-transcribe",
+            tts_model:
+              set_tts_model.value.trim() ||
+              (provider === "elevenlabs"
+                ? "eleven_turbo_v2_5"
+                : "gpt-4o-mini-tts"),
+            tts_voice:
+              (provider === "elevenlabs"
+                ? (selectedElevenVoice || currentSavedVoice)
+                : (set_tts_voice.value.trim() || "alloy")),
+            embedding_model: set_embedding_model.value.trim() || "text-embedding-3-small",
+          },
+          knowledge: {
+            enabled: set_kb_enabled.value === "true",
+            top_k: Math.max(1, parseInt(set_kb_top_k.value || "5", 10)),
+            backend: set_kb_backend.value,
+            local_path: set_kb_local_path.value.trim() || "data/qdrant_local",
+            qdrant_url: set_qdrant_url.value.trim() || "http://localhost:6333",
+            collection: set_qdrant_collection.value.trim() || "gm_knowledge",
+            split_collections: set_kb_split_collections.value === "true",
+            game_collection: set_qdrant_collection_game.value.trim() || "gm_knowledge_game",
+            guidance_collection: set_qdrant_collection_guidance.value.trim() || "gm_knowledge_guidance",
+            chunk_max_chars: Math.max(200, parseInt(set_chunk_max_chars.value || "1200", 10)),
+            chunk_overlap: Math.max(0, parseInt(set_chunk_overlap.value || "120", 10)),
+            primary_rulebook_source: set_primary_rulebook_source.value || "path",
+            primary_rulebook_doc_choice: set_primary_rulebook_doc_choice.value.trim() || "",
+            primary_rulebook_path: set_primary_rulebook_path.value.trim() || "",
+            primary_rulebook_doc_id: set_primary_rulebook_doc_id.value.trim() || "rulebook",
+            primary_rulebook_ruleset: set_primary_rulebook_ruleset.value.trim() || "",
+            primary_rulebook_doc_kind: set_primary_rulebook_doc_kind.value || "rulebook",
+            primary_rulebook_collection_target:
+              set_primary_rulebook_collection_target.value || "game",
+            primary_rulebook_auto_ingest: set_primary_rulebook_auto_ingest.value === "true",
+            primary_rulebook_auto_activate: set_primary_rulebook_auto_activate.value === "true",
+            active_doc_ids,
+          },
+          prompts: {
+            intent_classify_system: set_intent_system.value,
+            resolve_system: set_resolve_system.value,
+            resolve_user_template: set_resolve_user.value,
+            include_memory: set_include_memory.value === "true",
+            memory_turns: Math.max(0, parseInt(set_memory_turns.value || "0", 10)),
+            response_language_mode: set_response_language_mode.value || "player",
+          },
+        };
+      }
+
+      function renderKbDocs(docs) {
+        kbDocsCache = docs || [];
+        const selectedDoc =
+          (currentSettings &&
+            currentSettings.knowledge &&
+            (currentSettings.knowledge.primary_rulebook_doc_choice || currentSettings.knowledge.primary_rulebook_doc_id)) ||
+          "";
+        populateRulebookDocChoice(kbDocsCache, selectedDoc);
+        populateSetupRulebookDocs(kbDocsCache, selectedDoc);
+        kb_docs.innerHTML = "";
+        const active = (currentSettings && currentSettings.knowledge && currentSettings.knowledge.active_doc_ids) || [];
+
+        for (const d of kbDocsCache) {
+          const tr = document.createElement("tr");
+
+          const tdUse = document.createElement("td");
+          const chk = document.createElement("input");
+          chk.type = "checkbox";
+          chk.checked = active.includes(d.doc_id);
+          chk.addEventListener("change", async () => {
+            const s = currentSettings || {};
+            const cur = (s.knowledge && Array.isArray(s.knowledge.active_doc_ids)) ? [...s.knowledge.active_doc_ids] : [];
+            const next = chk.checked ? Array.from(new Set([...cur, d.doc_id])) : cur.filter((x) => x !== d.doc_id);
+            try {
+              const res = await rpc({ type: "settings_update", patch: { knowledge: { active_doc_ids: next } } });
+              if (res && res.settings) setSettingsForm(res.settings);
+              await refreshKbList();
+            } catch (e) {
+              addMsg("err", "ERROR", String(e));
+              chk.checked = !chk.checked;
+            }
+          });
+          tdUse.appendChild(chk);
+
+          const tdDoc = document.createElement("td");
+          const docTitle = document.createElement("div");
+          docTitle.textContent = d.filename || d.doc_id;
+          const docMeta = document.createElement("div");
+          docMeta.className = "status mono";
+          const bits = [d.doc_id];
+          if (d.doc_kind) bits.push(d.doc_kind);
+          if (d.ruleset) bits.push(d.ruleset);
+          if (d.collection_target) bits.push("collection:" + d.collection_target);
+          docMeta.textContent = bits.join(" \u2022 ");
+          tdDoc.appendChild(docTitle);
+          tdDoc.appendChild(docMeta);
+
+          const tdStatus = document.createElement("td");
+          const st = document.createElement("div");
+          st.textContent = d.status || "unknown";
+          const st2 = document.createElement("div");
+          st2.className = "status";
+          if (d.error) st2.textContent = String(d.error);
+          else if (d.chunks) {
+            let extra = "";
+            if (d.type_counts) {
+              try {
+                const entries = Object.entries(d.type_counts)
+                  .filter(([k, v]) => k && typeof v === "number")
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 4)
+                  .map(([k, v]) => `${k}:${v}`);
+                if (entries.length) extra = " (" + entries.join(" ") + ")";
+              } catch {}
+            }
+            st2.textContent = `chunks: ${d.chunks}${extra}`;
+          }
+          else if (d.received_bytes && d.total_bytes) st2.textContent = `${d.received_bytes}/${d.total_bytes} bytes`;
+          tdStatus.appendChild(st);
+          tdStatus.appendChild(st2);
+
+          const tdActions = document.createElement("td");
+          const btnIngest = document.createElement("button");
+          btnIngest.textContent = "Ingest";
+          btnIngest.disabled = !ws || ws.readyState !== WebSocket.OPEN;
+          btnIngest.addEventListener("click", async () => {
+            btnIngest.disabled = true;
+            try {
+              await rpc({ type: "kb_ingest_start", doc_id: d.doc_id });
+            } catch (e) {
+              addMsg("err", "ERROR", String(e));
+            } finally {
+              setTimeout(() => (btnIngest.disabled = !ws || ws.readyState !== WebSocket.OPEN), 600);
+            }
+          });
+
+          const btnDelete = document.createElement("button");
+          btnDelete.textContent = "Delete";
+          btnDelete.className = "danger";
+          btnDelete.disabled = !ws || ws.readyState !== WebSocket.OPEN;
+          btnDelete.addEventListener("click", async () => {
+            if (!confirm(`Delete doc ${d.doc_id}? This also deletes vectors in Qdrant.`)) return;
+            try {
+              await rpc({ type: "kb_delete", doc_id: d.doc_id, delete_file: false });
+              await refreshKbList();
+            } catch (e) {
+              addMsg("err", "ERROR", String(e));
+            }
+          });
+
+          tdActions.appendChild(btnIngest);
+          tdActions.appendChild(document.createTextNode(" "));
+          tdActions.appendChild(btnDelete);
+
+          tr.appendChild(tdUse);
+          tr.appendChild(tdDoc);
+          tr.appendChild(tdStatus);
+          tr.appendChild(tdActions);
+          kb_docs.appendChild(tr);
+        }
+      }
+
+      function renderKbSearchResults(results) {
+        kb_search_results.innerHTML = "";
+        const items = Array.isArray(results) ? results : [];
+        if (!items.length) {
+          const div = document.createElement("div");
+          div.className = "status";
+          div.textContent = "No results.";
+          kb_search_results.appendChild(div);
+          return;
+        }
+        for (const r of items) {
+          const meta = (r && r.meta) || {};
+          const hdrBits = [];
+          if (meta.doc_id) hdrBits.push(meta.doc_id);
+          if (meta.doc_kind) hdrBits.push(meta.doc_kind);
+          if (meta.ruleset) hdrBits.push(meta.ruleset);
+          if (meta.page) hdrBits.push("p" + meta.page);
+          if (meta.type) hdrBits.push(meta.type);
+          const hdr = hdrBits.length ? hdrBits.join(" • ") : "knowledge";
+
+          const card = document.createElement("div");
+          card.className = "msg gm";
+          const who = document.createElement("div");
+          who.className = "who";
+          who.textContent = "KB " + hdr;
+          const txt = document.createElement("div");
+          txt.textContent = String((r && r.text) || "").slice(0, 9000);
+          card.appendChild(who);
+          card.appendChild(txt);
+          kb_search_results.appendChild(card);
+        }
+      }
+
+      async function refreshKbList() {
+        try {
+          const res = await rpc({ type: "kb_list" });
+          if (res && res.documents) renderKbDocs(res.documents);
+        } catch (e) {
+          addMsg("err", "ERROR", String(e));
+        }
+      }
+
+      async function refreshMemory() {
+        try {
+          const res = await rpc({
+            type: "memory_get",
+            limit: 60,
+            scope: mem_scope.value,
+            session_id: mem_session_id.value.trim() || null,
+            player_id: mem_player_id.value.trim() || null,
+          });
+          mem_list.innerHTML = "";
+          const entries = (res && res.entries) || [];
+          for (const e of entries) addMemCard(e);
+          return entries;
+        } catch (e) {
+          addMsg("err", "ERROR", String(e));
+          return [];
+        }
+      }
+
+      async function refreshSecrets() {
+        try {
+          const res = await controlCall({ type: "secrets_get" });
+          if (res && res.secrets) renderSecretsSummary(res.secrets);
+        } catch (e) {
+          setupSecretsSummary.textContent = "Secret status unavailable.";
+        }
+      }
+
+      async function reconnectVoice() {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.close(1000, "reconnect_after_setup");
+          await new Promise((r) => setTimeout(r, 500));
+        }
+        connectBtn.click();
+      }
+
+      async function runSetupWizard() {
+        const mode = String(setup_wizard_mode.value || "guided");
+        const withAi = String(setup_wizard_ai.value || "true") === "true";
+        setupWizardStatus.textContent = "Running wizard...";
+        setupWizardBtn.disabled = true;
+        try {
+          await refreshSecrets();
+          const openaiOk = !!(currentSecrets && currentSecrets.OPENAI_API_KEY && currentSecrets.OPENAI_API_KEY.present);
+          const deepgramOk = !!(
+            currentSecrets &&
+            currentSecrets.DEEPGRAM_API_KEY &&
+            currentSecrets.DEEPGRAM_API_KEY.present
+          );
+          const elevenlabsOk = !!(
+            currentSecrets &&
+            currentSecrets.ELEVENLABS_API_KEY &&
+            currentSecrets.ELEVENLABS_API_KEY.present
+          );
+          const provider = String(setup_stt_provider.value || "openai");
+          const ttsProvider = String(setup_tts_provider.value || "openai");
+          if (!openaiOk) {
+            throw new Error("OpenAI API key is missing. Set it in Setup > API Keys.");
+          }
+          if (provider === "deepgram" && !deepgramOk) {
+            throw new Error("Deepgram API key is missing but Deepgram STT is selected.");
+          }
+          if (ttsProvider === "elevenlabs" && !elevenlabsOk) {
+            throw new Error("ElevenLabs API key is missing but ElevenLabs TTS is selected.");
+          }
+          const setupElevenVoiceId = String(setup_elevenlabs_voice_id.value || "").trim();
+          const setupElevenVoicePick = String(setup_elevenlabs_voice.value || "").trim();
+          const currentSavedTtsVoiceRaw =
+            (currentSettings && currentSettings.openai && String(currentSettings.openai.tts_voice || "").trim()) ||
+            "";
+          const currentSavedTtsVoice =
+            ttsProvider === "elevenlabs" && isLikelyOpenAiVoicePreset(currentSavedTtsVoiceRaw)
+              ? ""
+              : currentSavedTtsVoiceRaw;
+          const setupHasInvalidOpenAiVoiceId =
+            isLikelyOpenAiVoicePreset(setupElevenVoiceId) || isLikelyOpenAiVoicePreset(setupElevenVoicePick);
+          if (
+            ttsProvider === "elevenlabs" &&
+            (( !setupElevenVoiceId && !setupElevenVoicePick ) || setupHasInvalidOpenAiVoiceId) &&
+            !currentSavedTtsVoice
+          ) {
+            throw new Error("Select or paste an ElevenLabs Voice ID in Setup before running wizard.");
+          }
+
+          if (mode === "guided") {
+            const docSelected = String(setup_rulebook_doc.value || "").trim();
+            const pathSelected = String(setup_rulebook_path.value || "").trim();
+            if (!docSelected && !pathSelected) {
+              throw new Error("Select/upload a rulebook document or provide a rulebook path.");
+            }
+          }
+
+          await runQuickSetup(withAi);
+          setupWizardStatus.textContent = "Wizard complete.";
+        } catch (e) {
+          setupWizardStatus.textContent = "Wizard failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (setupWizardStatus.textContent = ""), 12000);
+          setupWizardBtn.disabled = false;
+        }
+      }
+
+      function hydrateChatFromMemory(entries) {
+        logEl.innerHTML = "";
+        const xs = Array.isArray(entries) ? entries : [];
+        for (const e of xs) {
+          if (!e || e.kind !== "turn") continue;
+          const who = String(e.player_id || "PLAYER").trim() || "PLAYER";
+          const pt = String(e.player_text || "").trim();
+          const gt = String(e.gm_text || "").trim();
+          const fups = Array.isArray(e.followups) ? e.followups : [];
+          if (pt) addMsg("you", who, pt);
+          if (gt) addMsg("gm", "GM", gt);
+          for (const fu of fups) {
+            const s = String(fu || "").trim();
+            if (s) addMsg("gm", "GM", s);
+          }
+        }
+      }
+
+      recent_campaigns.addEventListener("change", () => {
+        const v = (recent_campaigns.value || "").trim();
+        if (v) set_campaign_id.value = v;
+      });
+
+      recent_players.addEventListener("change", () => {
+        const v = (recent_players.value || "").trim();
+        if (v) set_player_id.value = v;
+      });
+
+      activeSpeakerSel.addEventListener("change", async () => {
+        const selected = String(activeSpeakerSel.value || "").trim();
+        if (!selected) return;
+        try {
+          const res = await controlCall({
+            type: "settings_update",
+            patch: { voice: { active_player_id: selected, player_id: selected } },
+          });
+          if (res && res.settings) setSettingsForm(res.settings);
+        } catch (e) {
+          addMsg("err", "ERROR", String(e));
+        }
+      });
+
+      set_primary_rulebook_source.addEventListener("change", () => {
+        updateRulebookSourceUI();
+        if (set_primary_rulebook_source.value === "doc" && !set_primary_rulebook_doc_choice.value) {
+          const firstDoc = set_primary_rulebook_doc_choice.querySelector("option[value]:not([value=''])");
+          if (firstDoc && firstDoc.value) set_primary_rulebook_doc_choice.value = firstDoc.value;
+        }
+      });
+
+      rulebook_file.addEventListener("change", () => {
+        const f = rulebook_file.files && rulebook_file.files[0];
+        rulebookUploadBtn.disabled = !f || !ws || ws.readyState !== WebSocket.OPEN;
+        if (f && !set_primary_rulebook_doc_id.value.trim()) {
+          const base = f.name.replace(/\\.[^.]+$/, "").replace(/[^a-zA-Z0-9_\\-]+/g, "_").slice(0, 42);
+          set_primary_rulebook_doc_id.value = base + "_" + Math.random().toString(16).slice(2, 6);
+        }
+      });
+
+      setup_rulebook_source.addEventListener("change", () => {
+        updateSetupRulebookUI();
+        if (setup_rulebook_source.value === "doc" && !setup_rulebook_doc.value) {
+          const firstDoc = setup_rulebook_doc.querySelector("option[value]:not([value=''])");
+          if (firstDoc && firstDoc.value) setup_rulebook_doc.value = firstDoc.value;
+        }
+      });
+
+      setup_rulebook_file.addEventListener("change", () => {
+        const f = setup_rulebook_file.files && setup_rulebook_file.files[0];
+        setupRulebookUploadBtn.disabled = !f || !ws || ws.readyState !== WebSocket.OPEN;
+        if (f && !setup_ruleset_tag.value.trim()) {
+          setup_ruleset_tag.value = setupRulesetFromSystem(setup_system.value);
+        }
+      });
+
+      setup_system_query.addEventListener("input", () => {
+        setupSystemSearchBtn.disabled = !setup_system_query.value.trim();
+      });
+
+      setup_system_result.addEventListener("change", updateSetupSystemHintFromSelection);
+
+      setupSystemSearchBtn.addEventListener("click", async () => {
+        const q = setup_system_query.value.trim();
+        if (!q) return;
+        setupSystemSearchBtn.disabled = true;
+        setupSystemHint.textContent = "Searching internet + presets...";
+        try {
+          const res = await controlCall({ type: "setup_system_search", query: q, limit: 8 }, 30000);
+          renderSetupSystemResults((res && res.results) || []);
+          if (!((res && res.results) || []).length) {
+            setupSystemHint.textContent = "No matches found.";
+          } else {
+            setup_system_result.value = String(res.results[0].id || "");
+            updateSetupSystemHintFromSelection();
+          }
+        } catch (e) {
+          setupSystemHint.textContent = "Search failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setupSystemSearchBtn.disabled = !setup_system_query.value.trim();
+        }
+      });
+
+      setupSystemUseBtn.addEventListener("click", () => {
+        const item = selectedSetupSystemResult();
+        if (!item) return;
+        const setupSys = String((item && item.setup_system) || "generic");
+        if (["numenera", "dnd5e", "pf2e", "generic"].includes(setupSys)) {
+          setup_system.value = setupSys;
+        } else {
+          setup_system.value = "generic";
+        }
+        const ruleset = String((item && item.ruleset) || "").trim();
+        if (ruleset) setup_ruleset_tag.value = ruleset;
+        const hint = String((item && item.beginner_hint) || "").trim();
+        if (hint) {
+          const cur = String(setup_ai_notes.value || "").trim();
+          setup_ai_notes.value = cur ? `${cur}\n${hint}` : hint;
+        }
+        updateSetupSystemHintFromSelection();
+      });
+
+      setup_openai_key_action.addEventListener("change", updateSecretInputState);
+      setup_deepgram_key_action.addEventListener("change", updateSecretInputState);
+      setup_elevenlabs_key_action.addEventListener("change", updateSecretInputState);
+      setup_openai_base_action.addEventListener("change", updateSecretInputState);
+      setupWizardBtn.addEventListener("click", runSetupWizard);
+      setupReconnectBtn.addEventListener("click", async () => {
+        setupReconnectBtn.disabled = true;
+        setupKeysStatus.textContent = "Reconnecting...";
+        try {
+          await reconnectVoice();
+          setupKeysStatus.textContent = "Reconnected.";
+        } catch (e) {
+          setupKeysStatus.textContent = "Reconnect failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (setupKeysStatus.textContent = ""), 9000);
+          setupReconnectBtn.disabled = !ws || ws.readyState !== WebSocket.OPEN;
+        }
+      });
+
+      setupSaveKeysBtn.addEventListener("click", async () => {
+        setupSaveKeysBtn.disabled = true;
+        setupKeysStatus.textContent = "Saving keys...";
+        try {
+          const updates = {};
+          const clear_keys = [];
+
+          if (setup_openai_key_action.value === "set" && setup_openai_api_key.value.trim()) {
+            updates.OPENAI_API_KEY = setup_openai_api_key.value.trim();
+          } else if (setup_openai_key_action.value === "clear") {
+            clear_keys.push("OPENAI_API_KEY");
+          }
+
+          if (setup_deepgram_key_action.value === "set" && setup_deepgram_api_key.value.trim()) {
+            updates.DEEPGRAM_API_KEY = setup_deepgram_api_key.value.trim();
+          } else if (setup_deepgram_key_action.value === "clear") {
+            clear_keys.push("DEEPGRAM_API_KEY");
+          }
+
+          if (setup_elevenlabs_key_action.value === "set" && setup_elevenlabs_api_key.value.trim()) {
+            updates.ELEVENLABS_API_KEY = setup_elevenlabs_api_key.value.trim();
+          } else if (setup_elevenlabs_key_action.value === "clear") {
+            clear_keys.push("ELEVENLABS_API_KEY");
+          }
+
+          if (setup_openai_base_action.value === "set" && setup_openai_base_url.value.trim()) {
+            updates.OPENAI_BASE_URL = setup_openai_base_url.value.trim();
+          } else if (setup_openai_base_action.value === "clear") {
+            clear_keys.push("OPENAI_BASE_URL");
+          }
+
+          if (!Object.keys(updates).length && !clear_keys.length) {
+            throw new Error("No key updates selected.");
+          }
+
+          const res = await controlCall({ type: "secrets_update", updates, clear_keys }, 20000);
+          if (res && res.secrets) renderSecretsSummary(res.secrets);
+          if (
+            (setup_tts_provider.value === "elevenlabs" || set_tts_provider.value === "elevenlabs") &&
+            res &&
+            res.secrets &&
+            res.secrets.ELEVENLABS_API_KEY &&
+            res.secrets.ELEVENLABS_API_KEY.present
+          ) {
+            await loadElevenlabsVoices();
+          }
+
+          setup_openai_api_key.value = "";
+          setup_deepgram_api_key.value = "";
+          setup_elevenlabs_api_key.value = "";
+          setup_openai_base_url.value = "";
+          setup_openai_key_action.value = "keep";
+          setup_deepgram_key_action.value = "keep";
+          setup_elevenlabs_key_action.value = "keep";
+          setup_openai_base_action.value = "keep";
+          updateSecretInputState();
+          const restartNeeded = !!(res && res.restart_required);
+          setupKeysStatus.textContent = restartNeeded
+            ? "Keys updated. Reconnect voice to apply."
+            : "Keys updated.";
+          setupReconnectBtn.disabled = !restartNeeded || !isWsOpen();
+        } catch (e) {
+          setupKeysStatus.textContent = "Key update failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (setupKeysStatus.textContent = ""), 9000);
+          setupSaveKeysBtn.disabled = false;
+        }
+      });
+
+      setupRulebookUploadBtn.addEventListener("click", async () => {
+        const f = setup_rulebook_file.files && setup_rulebook_file.files[0];
+        if (!f || !ws || ws.readyState !== WebSocket.OPEN) return;
+        setupRulebookUploadBtn.disabled = true;
+        setupRulebookStatus.textContent = "Uploading rulebook...";
+        try {
+          const baseDoc = normalizeDocId(f.name.replace(/\\.[^.]+$/, ""), "rulebook").slice(0, 59) || "rulebook";
+          const docId = `${baseDoc}_${Math.random().toString(16).slice(2, 6)}`;
+          const ruleset = String(setup_ruleset_tag.value || "").trim() || null;
+
+          const start = await rpc({
+            type: "kb_upload_start",
+            filename: f.name,
+            doc_id: docId,
+            doc_kind: "rulebook",
+            collection_target: "game",
+            ruleset,
+            total_bytes: f.size,
+          });
+          const upload_id = start.upload_id;
+          const final_doc_id = start.doc_id;
+          const buf = new Uint8Array(await f.arrayBuffer());
+          const CHUNK = 48 * 1024;
+          let seq = 0;
+          for (let i = 0; i < buf.length; i += CHUNK) {
+            const chunk = buf.subarray(i, i + CHUNK);
+            ws.send(
+              JSON.stringify({
+                type: "kb_upload_chunk",
+                upload_id,
+                seq,
+                data_b64: bytesToBase64(chunk),
+              })
+            );
+            seq++;
+            while (ws && ws.bufferedAmount > 8 * 1024 * 1024) {
+              await new Promise((r) => setTimeout(r, 40));
+            }
+          }
+          await rpc({ type: "kb_upload_finish", upload_id });
+          const patch = {
+            knowledge: {
+              enabled: true,
+              primary_rulebook_source: "doc",
+              primary_rulebook_doc_choice: final_doc_id,
+              primary_rulebook_doc_id: final_doc_id,
+              primary_rulebook_doc_kind: "rulebook",
+              primary_rulebook_collection_target: "game",
+              primary_rulebook_ruleset: ruleset || setupRulesetFromSystem(setup_system.value),
+              primary_rulebook_auto_ingest: true,
+              primary_rulebook_auto_activate: true,
+            },
+          };
+          const res = await rpc({ type: "settings_update", patch }, 30000);
+          if (res && res.settings) setSettingsForm(res.settings);
+          setup_rulebook_source.value = "doc";
+          updateSetupRulebookUI();
+          setupRulebookStatus.textContent = `Uploaded ${final_doc_id}.`;
+          await refreshKbList();
+        } catch (e) {
+          setupRulebookStatus.textContent = "Setup rulebook upload failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (setupRulebookStatus.textContent = ""), 12000);
+          setupRulebookUploadBtn.disabled = !(setup_rulebook_file.files && setup_rulebook_file.files[0]) || !ws || ws.readyState !== WebSocket.OPEN;
+        }
+      });
+
+      campaignNewBtn.addEventListener("click", async () => {
+        campaignStatus.textContent = "Creating new game...";
+        campaignNewBtn.disabled = true;
+        campaignLatestBtn.disabled = true;
+        campaignResetBtn.disabled = true;
+        try {
+          const res = await rpc({ type: "campaign_new" }, 30000);
+          if (res && res.settings) setSettingsForm(res.settings);
+          const entries = await refreshMemory();
+          hydrateChatFromMemory(entries);
+          addMsg("gm", "SYSTEM", "New game created.");
+          campaignStatus.textContent = "New game created.";
+        } catch (e) {
+          campaignStatus.textContent = "New game failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (campaignStatus.textContent = ""), 12000);
+          const en = !ws || ws.readyState !== WebSocket.OPEN;
+          campaignNewBtn.disabled = en;
+          campaignLatestBtn.disabled = en;
+          campaignResetBtn.disabled = en;
+        }
+      });
+
+      campaignLatestBtn.addEventListener("click", async () => {
+        campaignStatus.textContent = "Resuming latest save...";
+        campaignNewBtn.disabled = true;
+        campaignLatestBtn.disabled = true;
+        campaignResetBtn.disabled = true;
+        try {
+          const res = await rpc({ type: "campaign_resume_latest" }, 30000);
+          if (res && res.settings) setSettingsForm(res.settings);
+          const entries = await refreshMemory();
+          hydrateChatFromMemory(entries);
+          addMsg("gm", "SYSTEM", "Resumed latest save.");
+          campaignStatus.textContent = "Resumed latest save.";
+        } catch (e) {
+          campaignStatus.textContent = "Resume failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (campaignStatus.textContent = ""), 12000);
+          const en = !ws || ws.readyState !== WebSocket.OPEN;
+          campaignNewBtn.disabled = en;
+          campaignLatestBtn.disabled = en;
+          campaignResetBtn.disabled = en;
+        }
+      });
+
+      campaignResetBtn.addEventListener("click", async () => {
+        if (!confirm("Reset this game? This clears the saved memory for the current campaign.")) return;
+        campaignStatus.textContent = "Resetting...";
+        campaignNewBtn.disabled = true;
+        campaignLatestBtn.disabled = true;
+        campaignResetBtn.disabled = true;
+        try {
+          const res = await rpc({ type: "campaign_reset" }, 30000);
+          const entries = await refreshMemory();
+          hydrateChatFromMemory(entries);
+          addMsg(
+            "gm",
+            "SYSTEM",
+            `Game reset (cleared ${res.cleared_memory_entries || 0} memory entries).`
+          );
+          campaignStatus.textContent = "Reset.";
+        } catch (e) {
+          campaignStatus.textContent = "Reset failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (campaignStatus.textContent = ""), 12000);
+          const en = !ws || ws.readyState !== WebSocket.OPEN;
+          campaignNewBtn.disabled = en;
+          campaignLatestBtn.disabled = en;
+          campaignResetBtn.disabled = en;
+        }
+      });
+
+      function updateSetupLanguageUI() {
+        setup_locale.disabled = setup_language_mode.value !== "locale";
+      }
+
+      setup_player_count.addEventListener("change", () => {
+        setupPopulateActivePlayers(setup_player_count.value, setup_active_player.value || "player1");
+      });
+      setup_tts_provider.addEventListener("change", async () => {
+        updateSetupTtsUI();
+        if (setup_tts_provider.value === "elevenlabs") {
+          await loadElevenlabsVoices();
+        }
+      });
+      set_tts_provider.addEventListener("change", async () => {
+        updateAdvancedTtsUI();
+        if (set_tts_provider.value === "elevenlabs") {
+          await loadElevenlabsVoices();
+        }
+      });
+      setupRefreshVoicesBtn.addEventListener("click", async () => {
+        setupRefreshVoicesBtn.disabled = true;
+        try {
+          await loadElevenlabsVoices();
+        } finally {
+          updateSetupTtsUI();
+        }
+      });
+      setRefreshVoicesBtn.addEventListener("click", async () => {
+        setRefreshVoicesBtn.disabled = true;
+        try {
+          await loadElevenlabsVoices();
+        } finally {
+          updateAdvancedTtsUI();
+        }
+      });
+      setup_elevenlabs_voice.addEventListener("change", () => {
+        const v = String(setup_elevenlabs_voice.value || "").trim();
+        set_elevenlabs_voice.value = v;
+        setup_elevenlabs_voice_id.value = v;
+        set_elevenlabs_voice_id.value = v;
+        if (v) set_tts_voice.value = v;
+      });
+      set_elevenlabs_voice.addEventListener("change", () => {
+        const v = String(set_elevenlabs_voice.value || "").trim();
+        setup_elevenlabs_voice.value = v;
+        setup_elevenlabs_voice_id.value = v;
+        set_elevenlabs_voice_id.value = v;
+        if (v) set_tts_voice.value = v;
+      });
+      setup_elevenlabs_voice_id.addEventListener("input", () => {
+        const v = String(setup_elevenlabs_voice_id.value || "").trim();
+        setup_elevenlabs_voice_id.value = v;
+        set_elevenlabs_voice_id.value = v;
+        if (hasSelectOptionValue(setup_elevenlabs_voice, v)) setup_elevenlabs_voice.value = v;
+        if (hasSelectOptionValue(set_elevenlabs_voice, v)) set_elevenlabs_voice.value = v;
+        if (v) set_tts_voice.value = v;
+      });
+      set_elevenlabs_voice_id.addEventListener("input", () => {
+        const v = String(set_elevenlabs_voice_id.value || "").trim();
+        set_elevenlabs_voice_id.value = v;
+        setup_elevenlabs_voice_id.value = v;
+        if (hasSelectOptionValue(set_elevenlabs_voice, v)) set_elevenlabs_voice.value = v;
+        if (hasSelectOptionValue(setup_elevenlabs_voice, v)) setup_elevenlabs_voice.value = v;
+        if (v) set_tts_voice.value = v;
+      });
+      setup_system.addEventListener("change", () => {
+        if (!setup_ruleset_tag.value.trim() || setup_ruleset_tag.value.trim() === "generic") {
+          setup_ruleset_tag.value = setupRulesetFromSystem(setup_system.value);
+        }
+      });
+      setup_language_mode.addEventListener("change", updateSetupLanguageUI);
+      updateSetupLanguageUI();
+      updateSetupTtsUI();
+      updateAdvancedTtsUI();
+
+      async function runQuickSetup(withAiPrompts) {
+        setupStatus.textContent = withAiPrompts ? "Applying + generating AI prompts..." : "Applying quick setup...";
+        setupApplyBtn.disabled = true;
+        setupAiBtn.disabled = true;
+        try {
+          const notes = [];
+          const setupElevenVoiceId = String(setup_elevenlabs_voice_id.value || "").trim();
+          const setupElevenVoicePick = String(setup_elevenlabs_voice.value || "").trim();
+          const currentSavedTtsVoiceRaw =
+            (currentSettings && currentSettings.openai && String(currentSettings.openai.tts_voice || "").trim()) ||
+            "";
+          const currentSavedTtsVoice =
+            String(setup_tts_provider.value || "openai") === "elevenlabs" &&
+            isLikelyOpenAiVoicePreset(currentSavedTtsVoiceRaw)
+              ? ""
+              : currentSavedTtsVoiceRaw;
+          const setupHasInvalidOpenAiVoiceId =
+            isLikelyOpenAiVoicePreset(setupElevenVoiceId) || isLikelyOpenAiVoicePreset(setupElevenVoicePick);
+          if (
+            String(setup_tts_provider.value || "openai") === "elevenlabs" &&
+            (( !setupElevenVoiceId && !setupElevenVoicePick ) || setupHasInvalidOpenAiVoiceId) &&
+            !currentSavedTtsVoice
+          ) {
+            throw new Error("Select or paste an ElevenLabs Voice ID first.");
+          }
+          const patch = setupQuickPatch();
+          const res = await controlCall({ type: "settings_update", patch }, 45000);
+          if (res && res.settings) setSettingsForm(res.settings);
+          if (res && res.restart_required && Array.isArray(res.restart_keys) && res.restart_keys.length) {
+            notes.push(`restart required: ${res.restart_keys.join(", ")}`);
+          }
+
+          const shouldSyncRulebook =
+            patch.knowledge &&
+            ((patch.knowledge.primary_rulebook_source === "doc" && patch.knowledge.primary_rulebook_doc_choice) ||
+              (patch.knowledge.primary_rulebook_source === "path" && patch.knowledge.primary_rulebook_path));
+          if (shouldSyncRulebook && isWsOpen()) {
+            try {
+              await rpc({ type: "kb_sync_rulebook", ingest: true, activate: true }, 45000);
+            } catch (e) {
+              addMsg("err", "ERROR", `Rulebook sync: ${String(e)}`);
+            }
+          } else if (shouldSyncRulebook) {
+            notes.push("rulebook sync pending until Connect");
+          }
+
+          if (withAiPrompts) {
+            if (isWsOpen()) {
+              const aiNotes = String(setup_ai_notes.value || "").trim();
+              const style = `${setup_tone.value} ${setup_system.value}`.trim();
+              const basic = [
+                `System: ${setup_system.value}.`,
+                `Ruleset tag: ${setup_ruleset_tag.value || setupRulesetFromSystem(setup_system.value)}.`,
+                `Rules style: ${setup_rules_style.value}.`,
+                `Language mode: ${setup_language_mode.value}.`,
+                aiNotes ? `Campaign notes: ${aiNotes}` : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              const gp = await rpc(
+                { type: "prompts_generate", style: style || null, basic_prompt: basic || null },
+                120000
+              );
+              if (gp && gp.settings) setSettingsForm(gp.settings);
+            } else {
+              notes.push("AI prompt generation skipped until Connect");
+            }
+          }
+
+          const base = withAiPrompts ? "Quick setup + AI prompts applied." : "Quick setup applied.";
+          setupStatus.textContent = notes.length ? `${base} (${notes.join("; ")})` : base;
+        } catch (e) {
+          setupStatus.textContent = "Quick setup failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (setupStatus.textContent = ""), 12000);
+          setupApplyBtn.disabled = false;
+          setupAiBtn.disabled = false;
+        }
+      }
+
+      setupApplyBtn.addEventListener("click", async () => {
+        await runQuickSetup(false);
+      });
+      setupAiBtn.addEventListener("click", async () => {
+        await runQuickSetup(true);
+      });
+
+      settingsSaveBtn.addEventListener("click", async () => {
+        settingsStatus.textContent = "Saving...";
+        try {
+          const beforeCampaignId = currentSettings && currentSettings.voice ? currentSettings.voice.campaign_id : null;
+          const patch = getSettingsPatchFromForm();
+          const res = await controlCall({ type: "settings_update", patch });
+          if (res && res.settings) setSettingsForm(res.settings);
+          settingsStatus.textContent = res && res.restart_required ? `Saved. Restart required: ${res.restart_keys.join(", ")}` : "Saved.";
+          // Only reload the chat history if the campaign changed.
+          const afterCampaignId = res && res.settings && res.settings.voice ? res.settings.voice.campaign_id : null;
+          if (beforeCampaignId !== afterCampaignId && isWsOpen()) {
+            try {
+              const entries = await refreshMemory();
+              hydrateChatFromMemory(entries);
+            } catch {}
+          }
+        } catch (e) {
+          settingsStatus.textContent = "Save failed.";
+          addMsg("err", "ERROR", String(e));
+        }
+        setTimeout(() => (settingsStatus.textContent = ""), 9000);
+      });
+
+      rulebookUploadBtn.addEventListener("click", async () => {
+        const f = rulebook_file.files && rulebook_file.files[0];
+        if (!f || !ws || ws.readyState !== WebSocket.OPEN) return;
+        rulebookUploadBtn.disabled = true;
+        rulebookSyncStatus.textContent = "Uploading rulebook...";
+        try {
+          const inputDocId = set_primary_rulebook_doc_id.value.trim();
+          const docId = inputDocId || "";
+          const collectionTarget =
+            set_primary_rulebook_collection_target.value === "default"
+              ? null
+              : (set_primary_rulebook_collection_target.value || "").trim() || null;
+          const start = await rpc({
+            type: "kb_upload_start",
+            filename: f.name,
+            doc_id: docId,
+            doc_kind: set_primary_rulebook_doc_kind.value || "rulebook",
+            collection_target: collectionTarget,
+            ruleset: (set_primary_rulebook_ruleset.value || "").trim() || null,
+            total_bytes: f.size,
+          });
+          const upload_id = start.upload_id;
+          const final_doc_id = start.doc_id;
+          const buf = new Uint8Array(await f.arrayBuffer());
+          const CHUNK = 48 * 1024;
+          let seq = 0;
+          for (let i = 0; i < buf.length; i += CHUNK) {
+            const chunk = buf.subarray(i, i + CHUNK);
+            ws.send(
+              JSON.stringify({
+                type: "kb_upload_chunk",
+                upload_id,
+                seq,
+                data_b64: bytesToBase64(chunk),
+              })
+            );
+            seq++;
+            while (ws && ws.bufferedAmount > 8 * 1024 * 1024) {
+              await new Promise((r) => setTimeout(r, 40));
+            }
+          }
+          await rpc({ type: "kb_upload_finish", upload_id });
+          set_primary_rulebook_source.value = "doc";
+          set_primary_rulebook_doc_choice.value = final_doc_id;
+          set_primary_rulebook_doc_id.value = final_doc_id;
+          rulebookSyncStatus.textContent = `Uploaded ${final_doc_id}.`;
+          await refreshKbList();
+        } catch (e) {
+          rulebookSyncStatus.textContent = "Rulebook upload failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (rulebookSyncStatus.textContent = ""), 12000);
+          rulebookUploadBtn.disabled = !(rulebook_file.files && rulebook_file.files[0]) || !ws || ws.readyState !== WebSocket.OPEN;
+        }
+      });
+
+      rulebookSyncBtn.addEventListener("click", async () => {
+        rulebookSyncStatus.textContent = "Syncing rulebook...";
+        rulebookSyncBtn.disabled = true;
+        try {
+          if (set_primary_rulebook_source.value === "doc" && !set_primary_rulebook_doc_choice.value.trim()) {
+            throw new Error("Select a rulebook document from dropdown or upload one first.");
+          }
+          await rpc(
+            {
+              type: "kb_sync_rulebook",
+              ingest: set_primary_rulebook_auto_ingest.value === "true",
+              activate: set_primary_rulebook_auto_activate.value === "true",
+            },
+            30000
+          );
+          rulebookSyncStatus.textContent = "Rulebook sync started.";
+        } catch (e) {
+          rulebookSyncStatus.textContent = "Rulebook sync failed to start.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (rulebookSyncStatus.textContent = ""), 12000);
+          rulebookSyncBtn.disabled = !ws || ws.readyState !== WebSocket.OPEN;
+        }
+      });
+
+      async function generatePromptAll() {
+        promptGenStatus.textContent = "Generating...";
+        promptGenBtn.disabled = true;
+        promptGenIntentBtn.disabled = true;
+        promptGenResolveBtn.disabled = true;
+        promptGenTemplateBtn.disabled = true;
+        try {
+          const style = (prompt_style.value || "").trim();
+          const basic = (prompt_basic.value || "").trim();
+          const res = await rpc(
+            { type: "prompts_generate", style: style || null, basic_prompt: basic || null },
+            120000
+          );
+          if (res && res.settings) setSettingsForm(res.settings);
+          promptGenStatus.textContent = "Generated. Review the prompts and click Save Settings.";
+        } catch (e) {
+          promptGenStatus.textContent = "Generation failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (promptGenStatus.textContent = ""), 12000);
+          const en = !ws || ws.readyState !== WebSocket.OPEN;
+          promptGenBtn.disabled = en;
+          promptGenIntentBtn.disabled = en;
+          promptGenResolveBtn.disabled = en;
+          promptGenTemplateBtn.disabled = en;
+        }
+      }
+
+      async function generatePromptField(field, label) {
+        promptGenStatus.textContent = `Generating ${label}...`;
+        promptGenBtn.disabled = true;
+        promptGenIntentBtn.disabled = true;
+        promptGenResolveBtn.disabled = true;
+        promptGenTemplateBtn.disabled = true;
+        try {
+          const style = (prompt_style.value || "").trim();
+          const basic = (prompt_basic.value || "").trim();
+          const res = await rpc(
+            { type: "prompt_generate", field, style: style || null, basic_prompt: basic || null },
+            120000
+          );
+          if (res && res.settings) setSettingsForm(res.settings);
+          promptGenStatus.textContent = `Generated ${label}. Review and click Save Settings.`;
+        } catch (e) {
+          promptGenStatus.textContent = "Generation failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (promptGenStatus.textContent = ""), 12000);
+          const en = !ws || ws.readyState !== WebSocket.OPEN;
+          promptGenBtn.disabled = en;
+          promptGenIntentBtn.disabled = en;
+          promptGenResolveBtn.disabled = en;
+          promptGenTemplateBtn.disabled = en;
+        }
+      }
+
+      promptGenBtn.addEventListener("click", async () => {
+        await generatePromptAll();
+      });
+
+      promptGenIntentBtn.addEventListener("click", async () => {
+        await generatePromptField("intent_classify_system", "Intent Prompt");
+      });
+
+      promptGenResolveBtn.addEventListener("click", async () => {
+        await generatePromptField("resolve_system", "Resolve (System)");
+      });
+
+      promptGenTemplateBtn.addEventListener("click", async () => {
+        await generatePromptField("resolve_user_template", "Resolve (Template)");
+      });
+
+      kb_refresh_btn.addEventListener("click", async () => {
+        await refreshKbList();
+      });
+
+      kb_search_query.addEventListener("input", () => {
+        kb_search_btn.disabled = !ws || ws.readyState !== WebSocket.OPEN || !kb_search_query.value.trim();
+      });
+
+      kb_search_btn.addEventListener("click", async () => {
+        const q = kb_search_query.value.trim();
+        if (!q) return;
+        kb_search_status.textContent = "Searching...";
+        kb_search_btn.disabled = true;
+        try {
+          const res = await rpc({
+            type: "kb_search",
+            query: q,
+            chunk_type: kb_search_type.value,
+            doc_kind: kb_search_doc_kind.value,
+            collection_target: kb_search_collection.value,
+          });
+          renderKbSearchResults(res && res.results ? res.results : []);
+          kb_search_status.textContent = `Results: ${Array.isArray(res.results) ? res.results.length : 0}`;
+        } catch (e) {
+          kb_search_status.textContent = "Search failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          setTimeout(() => (kb_search_status.textContent = ""), 12000);
+          kb_search_btn.disabled = !ws || ws.readyState !== WebSocket.OPEN || !kb_search_query.value.trim();
+        }
+      });
+
+      kb_upload_btn.addEventListener("click", async () => {
+        const f = kb_file.files && kb_file.files[0];
+        if (!f) return;
+        const docId = kb_doc_id.value.trim();
+        const docKind = kb_doc_kind.value;
+        const ruleset = kb_ruleset.value.trim();
+        kb_upload_btn.disabled = true;
+        kb_upload_status.textContent = "Preparing upload...";
+        kb_upload_bar.style.width = "0%";
+
+        try {
+          const start = await rpc({
+            type: "kb_upload_start",
+            filename: f.name,
+            doc_id: docId || "",
+            doc_kind: docKind || null,
+            collection_target: (kb_collection_target.value || "").trim() || null,
+            ruleset: ruleset || null,
+            total_bytes: f.size,
+          });
+          const upload_id = start.upload_id;
+          const final_doc_id = start.doc_id;
+
+          const buf = new Uint8Array(await f.arrayBuffer());
+          const CHUNK = 48 * 1024;
+          let seq = 0;
+          for (let i = 0; i < buf.length; i += CHUNK) {
+            const chunk = buf.subarray(i, i + CHUNK);
+            ws.send(
+              JSON.stringify({
+                type: "kb_upload_chunk",
+                upload_id,
+                seq,
+                data_b64: bytesToBase64(chunk),
+              })
+            );
+            seq++;
+
+            const pct = Math.floor(((i + chunk.length) / buf.length) * 100);
+            kb_upload_bar.style.width = pct + "%";
+            kb_upload_status.textContent = `Uploading ${final_doc_id}: ${pct}%`;
+
+            // Backpressure: avoid unbounded buffering.
+            while (ws && ws.bufferedAmount > 8 * 1024 * 1024) {
+              await new Promise((r) => setTimeout(r, 40));
+            }
+          }
+
+          kb_upload_status.textContent = "Finalizing...";
+          await rpc({ type: "kb_upload_finish", upload_id });
+          kb_upload_bar.style.width = "100%";
+          kb_upload_status.textContent = `Uploaded ${final_doc_id}.`;
+          await refreshKbList();
+        } catch (e) {
+          kb_upload_status.textContent = "Upload failed.";
+          addMsg("err", "ERROR", String(e));
+        } finally {
+          kb_upload_btn.disabled = !ws || ws.readyState !== WebSocket.OPEN;
+        }
+      });
+
+      mem_refresh_btn.addEventListener("click", refreshMemory);
+      mem_scope.addEventListener("change", () => {
+        if (ws && ws.readyState === WebSocket.OPEN) refreshMemory();
+      });
+      mem_clear_btn.addEventListener("click", async () => {
+        const scope = mem_scope.value || "campaign";
+        if (!confirm(`Clear memory for scope '${scope}'?`)) return;
+        try {
+          const res = await rpc({
+            type: "memory_clear",
+            scope,
+            session_id: mem_session_id.value.trim() || null,
+            player_id: mem_player_id.value.trim() || null,
+          });
+          addMsg("gm", "SYSTEM", `Memory cleared (${res.cleared || 0} entries) for ${scope}.`);
+          await refreshMemory();
+        } catch (e) {
+          addMsg("err", "ERROR", String(e));
+        }
+      });
+
+      connectBtn.addEventListener("click", async () => {
+        if (wsConnectInFlight) return;
+        wsConnectInFlight = true;
+        connectBtn.disabled = true;
+        let thisWs = null;
+        try {
+          // Close any stale socket first so reconnect flow is deterministic.
+          if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+            try {
+              ws.close(1000, "reconnect");
+            } catch {}
+            await new Promise((r) => setTimeout(r, 250));
+          }
+
+          await ensureAudio();
+          await audioCtx.resume();
+
+          const targetUrl = (wsUrlEl.value || "").trim();
+          if (!targetUrl) {
+            throw new Error("WebSocket URL is empty.");
+          }
+          thisWs = new WebSocket(targetUrl);
+          ws = thisWs;
+          localStorage.setItem("vgm_ws_url", wsUrlEl.value);
+
+          ws.onopen = async () => {
+            if (ws !== thisWs) return;
+            wsConnectInFlight = false;
+            setStatus("ok", "Connected");
+            disconnectBtn.disabled = false;
+            connectBtn.disabled = true;
+            pttBtn.disabled = modeSel.value !== "ptt";
+            pttBtn.textContent = modeSel.value === "ptt" ? "Hold To Talk" : "Auto VAD Active";
+            const connectNotice =
+              modeSel.value === "ptt"
+                ? "Connected. Hold the talk button."
+                : "Connected. Auto VAD is enabled. Just speak.";
+            audioSendEnabled = true;
+            sentAudioFrames = 0;
+            sentAudioBytes = 0;
+            vadStarts = 0;
+            vadStops = 0;
+            updateNetStats();
+            try {
+              await startMicProcessing();
+            } catch (e) {
+              audioSendEnabled = false;
+              const msg = String(e && e.message ? e.message : e);
+              addMsg("err", "ERROR", `Microphone error: ${msg}`);
+              addMsg("err", "ERROR", "Tip: open the UI via http://localhost:8000/ (LAN IP is usually blocked).");
+              try {
+                ws.close();
+              } catch {}
+              return;
+            }
+
+            // Enable control UI
+            settingsSaveBtn.disabled = false;
+            setupApplyBtn.disabled = false;
+            setupAiBtn.disabled = false;
+            setupSaveKeysBtn.disabled = false;
+            setupWizardBtn.disabled = false;
+            setupReconnectBtn.disabled = true;
+            rulebookSyncBtn.disabled = false;
+            activeSpeakerSel.disabled = false;
+            promptGenBtn.disabled = false;
+            promptGenIntentBtn.disabled = false;
+            promptGenResolveBtn.disabled = false;
+            promptGenTemplateBtn.disabled = false;
+            campaignNewBtn.disabled = false;
+            campaignLatestBtn.disabled = false;
+            campaignResetBtn.disabled = false;
+            kb_refresh_btn.disabled = false;
+            mem_refresh_btn.disabled = false;
+            mem_clear_btn.disabled = false;
+            kb_upload_btn.disabled = !(kb_file.files && kb_file.files[0]);
+            rulebookUploadBtn.disabled = !(rulebook_file.files && rulebook_file.files[0]);
+            setupRulebookUploadBtn.disabled = !(setup_rulebook_file.files && setup_rulebook_file.files[0]);
+            setupSystemSearchBtn.disabled = !setup_system_query.value.trim();
+            setupSystemUseBtn.disabled = !setupSystemResults.length;
+            kb_search_btn.disabled = !kb_search_query.value.trim();
+            updateSetupTtsUI();
+            updateAdvancedTtsUI();
+
+            // Initial sync
+            let st = null;
+            try {
+              st = await rpc({ type: "server_status" });
+            } catch {}
+            try {
+              const s = await rpc({ type: "settings_get" });
+              if (s && s.settings) setSettingsForm(s.settings);
+            } catch {}
+            try {
+              await refreshKbList();
+            } catch {}
+            try {
+              await refreshSecrets();
+            } catch {}
+            try {
+              if (
+                (setup_tts_provider.value === "elevenlabs" || set_tts_provider.value === "elevenlabs") &&
+                currentSecrets &&
+                currentSecrets.ELEVENLABS_API_KEY &&
+                currentSecrets.ELEVENLABS_API_KEY.present
+              ) {
+                await loadElevenlabsVoices();
+              }
+            } catch {}
+            try {
+              const entries = await refreshMemory();
+              hydrateChatFromMemory(entries);
+              if (entries && entries.length) {
+                addMsg("gm", "SYSTEM", `Resumed ${entries.length} saved turns.`);
+              }
+            } catch {}
+            // Now that we have (optionally) hydrated history, show connection/system notices.
+            addMsg("gm", "SYSTEM", connectNotice);
+            if (st && st.openai_api_key_present === false) {
+              addMsg("err", "ERROR", "Server is missing OPENAI_API_KEY.");
+            }
+            if (
+              st &&
+              st.deepgram_api_key_present === false &&
+              currentSettings &&
+              currentSettings.openai &&
+              currentSettings.openai.stt_provider === "deepgram"
+            ) {
+              addMsg("err", "ERROR", "Deepgram STT is selected, but DEEPGRAM_API_KEY is missing.");
+            }
+            if (
+              st &&
+              st.elevenlabs_api_key_present === false &&
+              currentSettings &&
+              currentSettings.openai &&
+              currentSettings.openai.tts_provider === "elevenlabs"
+            ) {
+              addMsg("err", "ERROR", "ElevenLabs TTS is selected, but ELEVENLABS_API_KEY is missing.");
+            }
+            if (st && typeof st.openai_base_url === "string" && st.openai_base_url.trim()) {
+              addMsg("gm", "SYSTEM", `Server base_url: ${st.openai_base_url}`);
+            }
+          };
+
+          ws.onclose = async (ev) => {
+            if (ws !== thisWs) return;
+            wsConnectInFlight = false;
+            ws = null;
+            rejectAllPending("WebSocket disconnected");
+            setStatus("bad", "Disconnected");
+            disconnectBtn.disabled = true;
+            connectBtn.disabled = false;
+            pttBtn.disabled = true;
+            audioSendEnabled = false;
+            talking = false;
+            vadStartCandidateAt = null;
+            vadStopCandidateAt = null;
+            sendBuffer = new Uint8Array(0);
+            audioOutPlayhead = 0;
+            await stopMicProcessing();
+            clearTranscriptTimeout();
+            clearGMTimeout();
+
+            settingsSaveBtn.disabled = false;
+            setupApplyBtn.disabled = false;
+            setupAiBtn.disabled = false;
+            setupSaveKeysBtn.disabled = false;
+            setupWizardBtn.disabled = false;
+            setupReconnectBtn.disabled = true;
+            rulebookSyncBtn.disabled = true;
+            activeSpeakerSel.disabled = false;
+            promptGenBtn.disabled = true;
+            promptGenIntentBtn.disabled = true;
+            promptGenResolveBtn.disabled = true;
+            promptGenTemplateBtn.disabled = true;
+            campaignNewBtn.disabled = true;
+            campaignLatestBtn.disabled = true;
+            campaignResetBtn.disabled = true;
+            kb_refresh_btn.disabled = true;
+            mem_refresh_btn.disabled = true;
+            mem_clear_btn.disabled = true;
+            kb_upload_btn.disabled = true;
+            rulebookUploadBtn.disabled = true;
+            setupRulebookUploadBtn.disabled = true;
+            setupSystemSearchBtn.disabled = !setup_system_query.value.trim();
+            setupSystemUseBtn.disabled = !setupSystemResults.length;
+            kb_search_btn.disabled = true;
+            updateSetupTtsUI();
+            updateAdvancedTtsUI();
+
+            try {
+              const code = ev && typeof ev.code === "number" ? ev.code : 0;
+              const reason = ev && ev.reason ? String(ev.reason) : "";
+              addMsg("err", "SYSTEM", `Disconnected (code ${code}${reason ? ": " + reason : ""}).`);
+            } catch {}
+          };
+
+          ws.onerror = () => {
+            if (ws !== thisWs) return;
+            wsConnectInFlight = false;
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+              connectBtn.disabled = false;
+            }
+            addMsg("err", "ERROR", `WebSocket error connecting to ${wsUrlEl.value}.`);
+            addMsg("err", "ERROR", "Check the server terminal logs. If mic doesn't work, use http://localhost:8000/.");
+          };
+
+          ws.onmessage = (ev) => {
+            if (ws !== thisWs) return;
+            let msg = null;
+            try {
+              msg = JSON.parse(ev.data);
+            } catch {
+              return;
+            }
+
+            if (!msg || !msg.type) return;
+
+            // RPC response handling
+            if (msg.req_id && pending.has(msg.req_id)) {
+              const p = pending.get(msg.req_id);
+              clearTimeout(p.t);
+              pending.delete(msg.req_id);
+              p.resolve(msg);
+              // fall through to UI updates too
+            }
+
+            if (msg.type === "audio_out") {
+              playPCM16(msg.audio, msg.sample_rate);
+              return;
+            }
+            if (msg.type === "transcript" && msg.finalized) {
+              const who =
+                msg.user_id && String(msg.user_id).trim()
+                  ? String(msg.user_id).trim()
+                  : currentSettings && currentSettings.voice && currentSettings.voice.player_id
+                    ? String(currentSettings.voice.player_id)
+                  : "YOU";
+              addMsg("you", who, msg.text);
+              clearTranscriptTimeout();
+              armGMTimeout();
+              return;
+            }
+            if (msg.type === "text") {
+              addMsg("gm", "GM", msg.text);
+              clearGMTimeout();
+              return;
+            }
+            if (msg.type === "error") {
+              addMsg("err", "ERROR", msg.error);
+              clearGMTimeout();
+              clearTranscriptTimeout();
+              return;
+            }
+            if (msg.type === "debug") {
+              const ev = msg.event ? String(msg.event) : "debug";
+              if (ev === "utterance_stats") {
+                const f = typeof msg.frames === "number" ? msg.frames : "?";
+                const b = typeof msg.bytes === "number" ? msg.bytes : "?";
+                const ms = typeof msg.dt_ms === "number" ? msg.dt_ms : "?";
+                addMsg("gm", "DEBUG", `utterance: frames=${f} bytes=${b} dt_ms=${ms}`);
+              } else {
+                addMsg("gm", "DEBUG", `${ev}: ${JSON.stringify(msg)}`);
+              }
+              return;
+            }
+            if (msg.type === "speaker_map") {
+              if (msg.speaker_raw_id && msg.player_id) {
+                addMsg("gm", "SYSTEM", `Speaker mapped: ${msg.speaker_raw_id} -> ${msg.player_id}`);
+              }
+              return;
+            }
+            if (msg.type === "turn_debug" && msg.debug) {
+              const d = msg.debug || {};
+              const hits = Number(d.knowledge_hits || 0);
+              const qn = Number(d.retrieval_queries || 0);
+              const src = Array.isArray(d.knowledge_sources) ? d.knowledge_sources.slice(0, 4).join(", ") : "";
+              if (hits > 0) {
+                addMsg("gm", "DEBUG", `Knowledge used: ${hits} hit(s), ${qn} query(ies). ${src}`);
+              } else if (d.knowledge_enabled) {
+                addMsg("gm", "DEBUG", `Knowledge search ran (${qn} query), no hits.`);
+              }
+              return;
+            }
+            if (msg.type === "prompt_generate_started") {
+              const f = msg.field ? String(msg.field) : "prompt";
+              promptGenStatus.textContent = `Generating ${f} (server)...`;
+              return;
+            }
+            if (msg.type === "prompts_generate_started") {
+              promptGenStatus.textContent = "Generating (server)...";
+              return;
+            }
+            if (msg.type === "settings" && msg.settings) {
+              setSettingsForm(msg.settings);
+              return;
+            }
+            if (msg.type === "kb_list" && msg.documents) {
+              renderKbDocs(msg.documents);
+              return;
+            }
+            if (msg.type === "kb_ingest_progress") {
+              kb_upload_status.textContent = `Ingesting ${msg.doc_id}: ${msg.done}/${msg.total}`;
+              return;
+            }
+            if (msg.type === "kb_ingest_status") {
+              kb_upload_status.textContent = `Ingest ${msg.doc_id}: ${msg.status}${msg.error ? " (" + msg.error + ")" : ""}`;
+              refreshKbList();
+              return;
+            }
+            if (msg.type === "kb_rulebook_sync_status") {
+              if (msg.status === "starting") {
+                rulebookSyncStatus.textContent = "Rulebook sync running...";
+                setupRulebookStatus.textContent = "Rulebook sync running...";
+              } else if (msg.status === "ready") {
+                const r = msg.result || {};
+                const did = r.doc_id ? String(r.doc_id) : "rulebook";
+                const st = r.status ? String(r.status) : "uploaded";
+                const note = r.ingest_skipped_reason ? ` (${r.ingest_skipped_reason})` : "";
+                rulebookSyncStatus.textContent = `Rulebook synced: ${did} [${st}]${note}`;
+                setupRulebookStatus.textContent = `Rulebook synced: ${did} [${st}]${note}`;
+                refreshKbList();
+              } else if (msg.status === "error") {
+                rulebookSyncStatus.textContent = `Rulebook sync failed: ${msg.error || "unknown error"}`;
+                setupRulebookStatus.textContent = `Rulebook sync failed: ${msg.error || "unknown error"}`;
+              }
+              return;
+            }
+            if (msg.type === "setup_system_search_results") {
+              renderSetupSystemResults(msg.results || []);
+              if (setupSystemResults.length > 0) {
+                setup_system_result.value = String(setupSystemResults[0].id || "");
+                updateSetupSystemHintFromSelection();
+              }
+              return;
+            }
+            if (msg.type === "secrets" && msg.secrets) {
+              renderSecretsSummary(msg.secrets);
+              if (msg.restart_required) {
+                setupReconnectBtn.disabled = !ws || ws.readyState !== WebSocket.OPEN;
+              }
+              return;
+            }
+            if (msg.type === "memory" && msg.entries) {
+              mem_list.innerHTML = "";
+              for (const e of msg.entries) addMemCard(e);
+              return;
+            }
+          };
+        } catch (e) {
+          wsConnectInFlight = false;
+          if (thisWs) {
+            try {
+              thisWs.close();
+            } catch {}
+          }
+          ws = null;
+          setStatus("bad", "Disconnected");
+          disconnectBtn.disabled = true;
+          connectBtn.disabled = false;
+          addMsg("err", "ERROR", String(e));
+        }
+      });
+
+      disconnectBtn.addEventListener("click", () => {
+        wsConnectInFlight = false;
+        rejectAllPending("WebSocket disconnected");
+        if (ws) ws.close();
+      });
+
+      function sendManualText() {
+        const text = (manualText.value || "").trim();
+        if (!text) return;
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          addMsg("err", "ERROR", "WebSocket not connected.");
+          return;
+        }
+        const user_id =
+          activeSpeakerSel && activeSpeakerSel.value
+            ? String(activeSpeakerSel.value)
+            : currentSettings && currentSettings.voice && currentSettings.voice.player_id
+            ? String(currentSettings.voice.player_id)
+            : "player";
+        ws.send(JSON.stringify({ type: "manual_transcript", text, finalized: true, user_id }));
+        manualText.value = "";
+      }
+
+      manualSendBtn.addEventListener("click", sendManualText);
+      manualText.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendManualText();
+        }
+      });
+
+      function sendVAD(state) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        ws.send(JSON.stringify({ type: "vad", state }));
+        if (state === "start") vadStarts += 1;
+        if (state === "stop") vadStops += 1;
+        updateNetStats();
+      }
+
+      function startTalk() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        if (talking) return;
+        talking = true;
+        sendBuffer = new Uint8Array(0);
+        sendVAD("start");
+
+        if (maxTalkTimer) clearTimeout(maxTalkTimer);
+        maxTalkTimer = setTimeout(() => {
+          if (!talking) return;
+          addMsg("err", "SYSTEM", `Auto-stopping after ${Math.round(MAX_TALK_MS / 1000)}s (safety timeout).`);
+          stopTalk();
+        }, MAX_TALK_MS);
+
+        if (vadMode === "auto") {
+          const pr = takePreRoll();
+          if (pr.length) enqueueSendBytes(pr);
+        } else {
+          resetPreRoll();
+        }
+
+        pttBtn.textContent = vadMode === "ptt" ? "Talking... (Release)" : "Auto VAD: Talking";
+      }
+
+      function stopTalk() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        if (!talking) return;
+        talking = false;
+        if (maxTalkTimer) {
+          clearTimeout(maxTalkTimer);
+          maxTalkTimer = null;
+        }
+        flushSendBuffer();
+        sendVAD("stop");
+        armTranscriptTimeout();
+        pttBtn.textContent = vadMode === "ptt" ? "Hold To Talk" : "Auto VAD Active";
+      }
+
+      function autoVADTick(level) {
+        const now = nowMs();
+        const startTh = vadThreshold;
+        const stopTh = vadThreshold * 0.6;
+        const startMs = 140;
+        const stopMs = 650;
+
+        if (!talking) {
+          vadStopCandidateAt = null;
+          if (level > startTh) {
+            if (vadStartCandidateAt === null) vadStartCandidateAt = now;
+            if (now - vadStartCandidateAt >= startMs) {
+              startTalk();
+              vadStartCandidateAt = null;
+            }
+          } else {
+            vadStartCandidateAt = null;
+          }
+          return;
+        }
+
+        vadStartCandidateAt = null;
+        if (level < stopTh) {
+          if (vadStopCandidateAt === null) vadStopCandidateAt = now;
+          if (now - vadStopCandidateAt >= stopMs) {
+            stopTalk();
+            vadStopCandidateAt = null;
+          }
+        } else {
+          vadStopCandidateAt = null;
+        }
+      }
+
+      // Push-to-talk handling (pointer events cover mouse + touch + pen; keep a fallback for older browsers).
+      if (window.PointerEvent) {
+        let pttPointerId = null;
+        pttBtn.addEventListener("pointerdown", (e) => {
+          if (vadMode !== "ptt") return;
+          e.preventDefault();
+          pttPointerId = e.pointerId;
+          try {
+            pttBtn.setPointerCapture(pttPointerId);
+          } catch {}
+          startTalk();
+        });
+        function endPTT(e) {
+          if (vadMode !== "ptt") return;
+          if (!talking) return;
+          if (
+            pttPointerId !== null &&
+            e &&
+            typeof e.pointerId === "number" &&
+            e.pointerId !== pttPointerId
+          )
+            return;
+          try {
+            e && e.preventDefault && e.preventDefault();
+          } catch {}
+          stopTalk();
+          try {
+            if (pttPointerId !== null) pttBtn.releasePointerCapture(pttPointerId);
+          } catch {}
+          pttPointerId = null;
+        }
+        pttBtn.addEventListener("pointerup", endPTT);
+        pttBtn.addEventListener("pointercancel", endPTT);
+        window.addEventListener("blur", () => {
+          if (talking) endPTT(null);
+        });
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden && talking) endPTT(null);
+        });
+      } else {
+        // Mouse + touch fallback (older Safari).
+        pttBtn.addEventListener("mousedown", (e) => {
+          if (vadMode !== "ptt") return;
+          e.preventDefault();
+          startTalk();
+        });
+        window.addEventListener("mouseup", (e) => {
+          if (vadMode !== "ptt") return;
+          if (!talking) return;
+          e.preventDefault();
+          stopTalk();
+        });
+        pttBtn.addEventListener(
+          "touchstart",
+          (e) => {
+            if (vadMode !== "ptt") return;
+            e.preventDefault();
+            startTalk();
+          },
+          { passive: false }
+        );
+        window.addEventListener(
+          "touchend",
+          (e) => {
+            if (vadMode !== "ptt") return;
+            if (!talking) return;
+            e.preventDefault();
+            stopTalk();
+          },
+          { passive: false }
+        );
+        window.addEventListener("blur", () => {
+          if (talking) stopTalk();
+        });
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden && talking) stopTalk();
+        });
+      }
+    </script>
+  </body>
+</html>

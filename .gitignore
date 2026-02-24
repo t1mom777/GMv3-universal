@@ -1,0 +1,13 @@
+.venv/
+.venv-*/
+__pycache__/
+*.pyc
+.env
+data/
+*.egg-info/
+playwright-report/
+ui-next/node_modules/
+ui-next/.next/
+ui-next/out/
+build/
+proprietary-dist/

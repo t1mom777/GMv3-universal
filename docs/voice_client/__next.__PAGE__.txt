@@ -1,0 +1,7 @@
+1:"$Sreact.fragment"
+2:I[21429,["/_next/static/chunks/aec9ad3d446e3678.js"],"AppProviders"]
+3:I[19127,["/_next/static/chunks/aec9ad3d446e3678.js"],"GameMasterStudio"]
+4:I[60750,["/_next/static/chunks/22ebc23d1746d6c4.js"],"OutletBoundary"]
+5:"$Sreact.suspense"
+0:{"buildId":"WoyJkv2e4-JnRdpssqCZD","rsc":["$","$1","c",{"children":[["$","$L2",null,{"children":["$","$L3",null,{}]}],[["$","script","script-0",{"src":"/_next/static/chunks/aec9ad3d446e3678.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"loading":null,"isPartial":false}
+6:null

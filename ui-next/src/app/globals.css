@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f2f7fd;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --ring: #38bdf8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-ibm-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(14, 165, 233, 0.13), transparent 38%),
+    radial-gradient(circle at 88% 10%, rgba(14, 116, 255, 0.09), transparent 42%),
+    linear-gradient(180deg, #f8fbff, #eef5fc 40%, #f3f7fd);
+  color: var(--foreground);
+  font-family: var(--font-space-grotesk), "Avenir Next", "Segoe UI", sans-serif;
+}
+
+code,
+pre {
+  font-family: var(--font-ibm-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
