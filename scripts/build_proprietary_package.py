@@ -240,7 +240,7 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         f"""\
         # GMv3 Pro Binary ({tag})
 
-        This package is a compiled proprietary distribution.
+        This package is a compiled distribution.
 
         ## Quick start
         Linux/macOS:
@@ -261,6 +261,12 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         - `DEEPGRAM_API_KEY`
         - `ELEVENLABS_API_KEY`
 
+        ## Highlights
+        - VAD-based live turn detection and interruption.
+        - Multi-player voice detection flow (up to 8 players).
+        - RLM + LLM + Qdrant rulebook retrieval.
+        - Real-time voice options with OpenAI, Deepgram, and ElevenLabs.
+
         ## Note
         This package is hardened and ships no plain project source.
         Absolute reverse-engineering prevention is not technically guaranteed.
@@ -280,7 +286,7 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         applicable law explicitly permits despite this restriction.
         """
     )
-    _write_text(pkg_dir / "LICENSE-PROPRIETARY.txt", license_text)
+    _write_text(pkg_dir / "LICENSE.txt", "Proprietary Software License\n\n" + license_text)
     _chmod_exec([pkg_dir / "run.sh", pkg_dir / "install.sh"])
 
     artifacts: list[Path] = []

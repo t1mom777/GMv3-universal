@@ -1,4 +1,4 @@
-name: Build Proprietary Universal
+name: Build Universal Packages
 
 on:
   workflow_dispatch:

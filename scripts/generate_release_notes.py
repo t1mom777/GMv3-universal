@@ -42,7 +42,7 @@ def _render(version: str, checksums: list[tuple[str, str]]) -> str:
         by_platform[key].sort()
 
     lines: list[str] = []
-    lines.append(f"# GMv3 Pro {version}")
+    lines.append(f"# GMv3 {version}")
     lines.append("")
     lines.append(f"Release date (UTC): {now}")
     lines.append("")
@@ -59,9 +59,12 @@ def _render(version: str, checksums: list[tuple[str, str]]) -> str:
         lines.append("- Release assets are attached below.")
     lines.append("")
     lines.append("## Included")
-    lines.append("- Proprietary compiled app package (no plain project source files shipped).")
+    lines.append("- Compiled app package (no plain project source files shipped).")
     lines.append("- Installer/run scripts for the target OS.")
     lines.append("- `.env.example` for configuration.")
+    lines.append("- VAD turn detection + multilingual real-time voice pipeline.")
+    lines.append("- Multi-player voice/speaker detection flow with persistent player profiles.")
+    lines.append("- RLM + LLM + Qdrant retrieval stack for rulebook-grounded gameplay.")
     lines.append("- ChatGPT account fallback for LLM turns (`GM_LLM_PROVIDER=codex_chatgpt` + `codex login`).")
     lines.append("")
     lines.append("## Notes")

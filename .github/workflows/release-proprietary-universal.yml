@@ -1,4 +1,4 @@
-name: Release Proprietary Universal
+name: Release Universal Packages
 
 on:
   workflow_dispatch:
