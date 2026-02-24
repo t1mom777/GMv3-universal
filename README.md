@@ -37,17 +37,32 @@ Notes:
 - This fallback is for **LLM** turns.
 - STT/TTS still need their own credentials/providers (e.g., Deepgram/ElevenLabs/OpenAI).
 
-## Local build (current OS)
+## Install (Linux / Windows / macOS)
+1. Open the latest GitHub Release and download the archive for your OS.
+2. Extract the archive.
+3. Create `.env` from `.env.example`, then set your provider keys.
+
+Linux:
 ```bash
-python -m pip install -U pip
-python -m pip install -e '.[voice,knowledge]' pyinstaller
-npm --prefix ui-next ci
-npm --prefix ui-next run build
-npm --prefix ui-next run deploy:voice-client
-python scripts/build_proprietary_package.py --output proprietary-dist
+./install.sh
+# or portable run from extracted folder:
+./run.sh
 ```
 
-Artifacts will be in `proprietary-dist/`.
+macOS:
+```bash
+chmod +x install.sh run.sh
+./install.sh
+# or portable:
+./run.sh
+```
+
+Windows (PowerShell):
+```powershell
+.\install.ps1
+# or portable run from extracted folder:
+.\run.bat
+```
 
 ## Universal build (GitHub Actions)
 Workflow file:
