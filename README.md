@@ -59,6 +59,9 @@ Windows (PowerShell):
 .\run.bat
 ```
 
+## 🤝 Need Help?
+Feel free to contact me through GitHub Issues if you want help installing and setting up the app for your campaign. I can help you get from download to first playable session.
+
 ## Deliverable contents
 Each generated package includes:
 - Compiled app binary (`app/GMv3Server` / `app/GMv3Server.exe`)

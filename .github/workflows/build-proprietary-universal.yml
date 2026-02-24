@@ -47,9 +47,10 @@ jobs:
         run: npm --prefix ui-next run build
 
       - name: Deploy static voice client
+        shell: bash
         run: npm --prefix ui-next run deploy:voice-client
 
-      - name: Build proprietary package
+      - name: Build package
         run: python scripts/build_proprietary_package.py --output proprietary-dist
 
       - name: Upload artifacts
