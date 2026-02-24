@@ -1,11 +1,23 @@
 # GMv3 Proprietary Universal Builder
 
-This project builds proprietary binary distributions for:
+Turn any tabletop rulebook PDF into a live AI Game Master experience.
+
+Players can:
+- upload any rulebook PDF and start a campaign quickly;
+- play by voice with multilingual responses;
+- keep persistent campaign memory and player context across sessions.
+
+This repository builds proprietary binary distributions for:
 - Linux
 - Windows
 - macOS
 
 It is designed for distribution where users can install and run, but do not receive plain project source files.
+
+## Why users download this
+- One setup flow: upload rulebook, choose voices/providers, play.
+- Real-time GM voice + chat with interruption handling.
+- Works across Linux, Windows, and macOS with release installers.
 
 ## Important limits
 Absolute prevention of reverse engineering/copying is not technically guaranteed for client-side software. This package is hardened (compiled binary + stripped source maps + proprietary license), not mathematically unbreakable.
