@@ -86,23 +86,84 @@ chmod +x install.sh run.sh
 ```
 6. Open the URL shown in terminal (usually `http://localhost:8000`).
 
-Windows (x64, PowerShell):
-1. Download `GMv3Pro-windows-x64-<version>.zip` from the release page.
-2. Extract and enter folder:
-```powershell
-Expand-Archive -Path .\GMv3Pro-windows-x64-<version>.zip -DestinationPath .
-Set-Location .\GMv3Pro-windows-x64-<version>
-```
-3. Create env file and add keys:
-```powershell
-Copy-Item .env.example .env
-notepad .env
-```
-4. Run setup/start:
-```powershell
-.\install.ps1
-# next launches can use:
-.\run.bat
+## Windows (x64) — Installation via File Explorer
+
+---
+
+### 1. Download the Release
+1. Go to the project's **Releases** page on GitHub.
+2. Download:  
+   `GMv3Pro-windows-x64-<version>.zip`
+---
+
+### 2. Extract the ZIP File
+1. Open **File Explorer**.
+2. Navigate to your downloaded `.zip` file.
+3. Right-click the file → select **Extract All…**
+4. Choose a destination folder (or keep the default).
+5. Click **Extract**.
+
+This will create a new folder named:
+
+GMv3Pro-windows-x64-<version>
+
+---
+
+### 3. Create the `.env` File
+1. Open the extracted folder.
+2. Locate the file:
+
+.env.example
+
+3. Right-click → **Copy**
+4. Right-click empty space in the folder → **Paste**
+5. Rename the copied file to:
+
+.env
+
+> If Windows warns about changing the file extension, click **Yes**.
+
+6. Right-click `.env` → **Open with → Notepad**
+7. Add your required API keys and configuration values.
+8. Click **File → Save**, then close Notepad.
+
+---
+
+### 4. Run Initial Setup
+
+1. In the same folder, locate:
+
+install.ps1
+
+2. Right-click → **Run with PowerShell**
+3. If prompted for permission, allow it.
+4. Wait until the installation completes.
+
+---
+
+### 5. Start the Application
+
+After installation:
+1. Double-click:
+
+run.bat
+
+A terminal window will open and display a local URL.
+
+---
+
+### 6. Open in Browser
+Open your browser and navigate to:
+
+http://localhost:8000
+
+(If a different URL is shown in the terminal, use that instead.)
+
+---
+
+## ✅ Done
+
+The application should now be running locally on your Windows machine.
 ```
 5. Open the URL shown in terminal (usually `http://localhost:8000`).
 
