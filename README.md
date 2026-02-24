@@ -12,8 +12,6 @@ This repository builds universal binary distributions for:
 - Windows
 - macOS
 
-It is designed for distribution where users can install and run, but do not receive plain project source files.
-
 ## Why users download this
 - 🚀 One setup flow: upload rulebook, choose voices/providers, play.
 - 🗣️ Real-time GM voice + chat with interruption handling.
@@ -23,9 +21,6 @@ It is designed for distribution where users can install and run, but do not rece
 - 💻 Works across Linux, Windows, and macOS with release installers.
 - ⚙️ Tech stack: **RLM + LLM + Qdrant** with real-time voice.
 - 🔌 Voice/AI options: **OpenAI**, **Deepgram**, **ElevenLabs (11Labs)**.
-
-## Important limits
-Absolute prevention of reverse engineering/copying is not technically guaranteed for client-side software. This package is hardened (compiled binary + stripped source maps + license restrictions), not mathematically unbreakable.
 
 ## ChatGPT account fallback (no API key)
 This app now supports an LLM fallback using a local ChatGPT-authenticated Codex session:
@@ -63,26 +58,6 @@ Windows (PowerShell):
 # or portable run from extracted folder:
 .\run.bat
 ```
-
-## Universal build (GitHub Actions)
-Workflow file:
-- `.github/workflows/build-proprietary-universal.yml`
-
-Run via GitHub Actions `workflow_dispatch`.
-It produces OS-specific artifacts for Linux, Windows, macOS.
-
-## GitHub release (one-click downloads)
-Release workflow file:
-- `.github/workflows/release-proprietary-universal.yml`
-
-This workflow builds all OS packages and publishes one GitHub Release with:
-- Linux/Windows/macOS archives attached as release assets
-- `SHA256SUMS.txt`
-- auto-generated release notes
-
-Ways to trigger:
-- Push a tag like `v3.0.0`
-- Or run `workflow_dispatch` and provide `version` (for example `v3.0.0`)
 
 ## Deliverable contents
 Each generated package includes:
