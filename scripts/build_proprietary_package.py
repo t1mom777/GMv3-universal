@@ -287,16 +287,50 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         """\
         @echo off
         setlocal
-        cd /d %~dp0
-        if not exist .env (
-          copy /Y .env.example .env >nul
+        cd /d "%~dp0"
+        if not exist ".env" (
+          copy /Y ".env.example" ".env" >nul
           echo Created .env from template. Fill API keys and rerun.
         )
-        app\\GMv3Server.exe --mode voice-ws
-        endlocal
+        if not exist "app\\GMv3Server.exe" (
+          echo ERROR: app\\GMv3Server.exe was not found.
+          pause
+          endlocal & exit /b 1
+        )
+        "app\\GMv3Server.exe" --mode voice-ws
+        set EXIT_CODE=%ERRORLEVEL%
+        if not "%EXIT_CODE%"=="0" (
+          echo.
+          echo Server exited with code %EXIT_CODE%.
+          pause
+        )
+        endlocal & exit /b %EXIT_CODE%
         """
     )
     _write_text(pkg_dir / "run.bat", run_bat)
+
+    install_bat = textwrap.dedent(
+        """\
+        @echo off
+        setlocal
+        cd /d "%~dp0"
+        echo Starting GMv3 Pro Windows installer...
+        powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
+        set EXIT_CODE=%ERRORLEVEL%
+        if not "%EXIT_CODE%"=="0" (
+          echo.
+          echo Installer failed with code %EXIT_CODE%.
+          echo If needed, right-click install.ps1 and run it with PowerShell.
+          pause
+          endlocal & exit /b %EXIT_CODE%
+        )
+        echo.
+        echo Installer finished.
+        pause
+        endlocal & exit /b 0
+        """
+    )
+    _write_text(pkg_dir / "install.bat", install_bat)
 
     install_ps1 = textwrap.dedent(
         """\
@@ -316,6 +350,10 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         Copy-Item -Recurse -Force (Join-Path $src "app") $target
         Copy-Item -Force (Join-Path $src ".env.example") $target
         Copy-Item -Force (Join-Path $src "run.bat") $target
+        Copy-Item -Force (Join-Path $src "install.ps1") $target
+        if (Test-Path (Join-Path $src "install.bat")) {
+          Copy-Item -Force (Join-Path $src "install.bat") $target
+        }
 
         $envPath = Join-Path $target ".env"
         if (-not (Test-Path $envPath)) {
@@ -378,6 +416,7 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         Write-Host "  1) Review .env and add provider keys"
         Write-Host "  2) Start server: .\\run.bat"
         Write-Host "  3) Open: http://localhost:8000"
+        Write-Host "  4) Re-run setup later: .\\install.bat"
 
         $startNow = Read-Host "Start now? [y/N]"
         if (-not [string]::IsNullOrWhiteSpace($startNow) -and $startNow.Trim().ToLower() -eq "y") {
@@ -405,7 +444,8 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         ```
 
         Windows (guided):
-        - Run `install.ps1` in PowerShell.
+        - Double-click `install.bat`.
+        - If needed, run `install.ps1`.
 
         The installer guides you through:
         - install location
@@ -416,7 +456,7 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
 
         Next launches:
         - Linux/macOS: `./run.sh`
-        - Windows: `run.bat`
+        - Windows: double-click `run.bat`
 
         ## Required
         - Choose one LLM auth mode:

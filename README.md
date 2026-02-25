@@ -98,8 +98,8 @@ Windows (x64, GUI / File Explorer):
 2. Right-click ZIP -> **Extract All...**.
 3. Open extracted folder `GMv3Pro-windows-x64-<version>`.
 4. Copy `.env.example` to `.env`, then edit `.env` in Notepad.
-5. Right-click `install.ps1` and run it, then follow prompts.
-6. Start with `run.bat`.
+5. Double-click `install.bat` and follow prompts.
+6. Double-click `run.bat` to start.
 7. Open `http://localhost:8000` (or URL printed in terminal).
 
 ## 🤝 Need Help?
