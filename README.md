@@ -93,30 +93,7 @@ chmod +x install.sh run.sh
 ./run.sh
 ```
 
-Windows (x64, PowerShell):
-1. Download `GMv3Pro-windows-x64-<version>.zip` from the release page.
-2. Extract and enter folder:
-```powershell
-Expand-Archive -Path .\GMv3Pro-windows-x64-<version>.zip -DestinationPath .
-Set-Location .\GMv3Pro-windows-x64-<version>
-```
-3. Create env file and add keys:
-```powershell
-Copy-Item .env.example .env
-notepad .env
-```
-4. Run guided setup:
-```powershell
-.\install.ps1
-```
-5. Follow prompts (auth mode, `.env` editing, optional immediate launch).
-6. Open the URL shown in terminal (usually `http://localhost:8000`).
-7. Next launches can use:
-```powershell
-.\run.bat
-```
-
-Windows (x64, File Explorer click-through):
+Windows (x64, GUI / File Explorer):
 1. Download `GMv3Pro-windows-x64-<version>.zip`.
 2. Right-click ZIP -> **Extract All...**.
 3. Open extracted folder `GMv3Pro-windows-x64-<version>`.
