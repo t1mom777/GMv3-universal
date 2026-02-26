@@ -167,8 +167,8 @@ def _codex_npm_tag_and_vendor_triple() -> tuple[str, str]:
 def _bundle_codex_cli(*, app_dir: Path, stamp: str) -> None:
     if shutil.which("npm") is None:
         raise RuntimeError("npm is required at build time to bundle Codex CLI.")
-    npm_tag, vendor_triple = _codex_npm_tag_and_vendor_triple()
-    work_dir = ROOT / "build" / f"codex-bundle-{stamp}-{npm_tag}"
+    platform_key, vendor_triple = _codex_npm_tag_and_vendor_triple()
+    work_dir = ROOT / "build" / f"codex-bundle-{stamp}-{platform_key}"
     if work_dir.exists():
         shutil.rmtree(work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -186,12 +186,29 @@ def _bundle_codex_cli(*, app_dir: Path, stamp: str) -> None:
             "--no-fund",
             "--no-audit",
             "--omit=dev",
-            f"@openai/codex@{npm_tag}",
+            "@openai/codex@latest",
         ],
         cwd=work_dir,
     )
 
-    vendor_root = work_dir / "node_modules" / "@openai" / "codex" / "vendor" / vendor_triple
+    openai_nm = work_dir / "node_modules" / "@openai"
+    candidate_vendor_roots: list[Path] = []
+    candidate_vendor_roots.append(openai_nm / "codex" / "vendor" / vendor_triple)
+    if openai_nm.exists():
+        for pkg_dir in openai_nm.iterdir():
+            if not pkg_dir.is_dir():
+                continue
+            candidate_vendor_roots.append(pkg_dir / "vendor" / vendor_triple)
+
+    vendor_root: Path | None = None
+    for cand in candidate_vendor_roots:
+        if (cand / "codex").exists():
+            vendor_root = cand
+            break
+    if vendor_root is None:
+        roots = "\n".join(str(p) for p in candidate_vendor_roots)
+        raise RuntimeError(f"Bundled Codex CLI missing expected vendor roots:\n{roots}")
+
     codex_src = vendor_root / "codex"
     path_src = vendor_root / "path"
     if not codex_src.exists():
