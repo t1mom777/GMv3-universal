@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import platform
 import shutil
@@ -11,6 +12,7 @@ import textwrap
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
+from urllib.request import Request, urlopen
 from zipfile import ZIP_DEFLATED, ZipFile
 
 
@@ -165,50 +167,33 @@ def _codex_npm_tag_and_vendor_triple() -> tuple[str, str]:
 
 
 def _bundle_codex_cli(*, app_dir: Path, stamp: str) -> None:
-    if shutil.which("npm") is None:
-        raise RuntimeError("npm is required at build time to bundle Codex CLI.")
     platform_key, vendor_triple = _codex_npm_tag_and_vendor_triple()
     work_dir = ROOT / "build" / f"codex-bundle-{stamp}-{platform_key}"
     if work_dir.exists():
         shutil.rmtree(work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    _write_text(
-        work_dir / "package.json",
-        '{\n  "name": "gmv3-codex-bundle",\n  "private": true,\n  "version": "1.0.0"\n}\n',
-    )
+    # Pull target-specific native Codex CLI tarball from npm registry at build time.
+    meta_req = Request("https://registry.npmjs.org/@openai/codex", headers={"Accept": "application/json"})
+    with urlopen(meta_req, timeout=30) as resp:
+        meta = json.load(resp)
+    dist_tags = meta.get("dist-tags") or {}
+    tagged_version = str(dist_tags.get(platform_key) or "").strip()
+    if not tagged_version:
+        raise RuntimeError(f"Missing @openai/codex dist-tag for platform: {platform_key}")
+    versions = meta.get("versions") or {}
+    version_meta = versions.get(tagged_version) or {}
+    tarball_url = str(((version_meta.get("dist") or {}).get("tarball")) or "").strip()
+    if not tarball_url:
+        raise RuntimeError(f"Missing tarball URL for @openai/codex version: {tagged_version}")
 
-    # Pull target-specific native Codex CLI bundle at build time so installer stays one-click/offline.
-    _run(
-        [
-            "npm",
-            "install",
-            "--no-fund",
-            "--no-audit",
-            "--omit=dev",
-            "@openai/codex@latest",
-        ],
-        cwd=work_dir,
-    )
+    tarball_path = work_dir / "codex.tgz"
+    with urlopen(tarball_url, timeout=60) as src, tarball_path.open("wb") as dst:
+        shutil.copyfileobj(src, dst)
+    with tarfile.open(tarball_path, "r:gz") as tf:
+        tf.extractall(work_dir)
 
-    openai_nm = work_dir / "node_modules" / "@openai"
-    candidate_vendor_roots: list[Path] = []
-    candidate_vendor_roots.append(openai_nm / "codex" / "vendor" / vendor_triple)
-    if openai_nm.exists():
-        for pkg_dir in openai_nm.iterdir():
-            if not pkg_dir.is_dir():
-                continue
-            candidate_vendor_roots.append(pkg_dir / "vendor" / vendor_triple)
-
-    vendor_root: Path | None = None
-    for cand in candidate_vendor_roots:
-        if (cand / "codex").exists():
-            vendor_root = cand
-            break
-    if vendor_root is None:
-        roots = "\n".join(str(p) for p in candidate_vendor_roots)
-        raise RuntimeError(f"Bundled Codex CLI missing expected vendor roots:\n{roots}")
-
+    vendor_root = work_dir / "package" / "vendor" / vendor_triple
     codex_src = vendor_root / "codex"
     path_src = vendor_root / "path"
     if not codex_src.exists():
