@@ -26,17 +26,19 @@ This repository builds universal binary distributions for:
 ## LLM Authentication Options (Alternative Modes)
 For **LLM turns**, you can use either mode:
 - **OpenAI API mode**: set `GM_LLM_PROVIDER=openai` and `OPENAI_API_KEY=...`
-- **ChatGPT Codex mode**: set `GM_LLM_PROVIDER=codex_chatgpt` and run `codex login`
+- **ChatGPT Codex mode**: set `GM_LLM_PROVIDER=codex_chatgpt` and run bundled `codex login`
 
 Notes:
 - OpenAI and Codex ChatGPT are alternatives, not backup-only behavior.
 - STT/TTS still use their own provider credentials (Deepgram / ElevenLabs / OpenAI).
+- Codex CLI is bundled in release packages; no extra Codex download is required during install.
 
 ## Install (Linux / Windows / macOS)
 Download from the latest release:
 `https://github.com/t1mom777/GMv3-universal/releases/latest`
 
 All packaged installers are **guided first-run scripts**: they install files, create `.env`, prompt for auth mode, and print final localhost launch instructions.
+Packages are self-contained (app runtime + dependencies + bundled Codex CLI), so installation itself does not download extra frameworks.
 
 Linux (x64):
 1. Download `GMv3Pro-linux-x64-<version>.tar.gz` (or `.zip`) from the release page.
@@ -108,6 +110,7 @@ Feel free to contact me through GitHub Issues if you want help installing and se
 ## Deliverable contents
 Each generated package includes:
 - Compiled app binary (`app/GMv3Server` / `app/GMv3Server.exe`)
+- Bundled Codex CLI native binary (`app/codex/...`) + bundled `rg` helper (`app/path/...`)
 - `.env.example`
 - Install/run scripts (`install.sh` / `run.sh`, plus Windows scripts)
 - `LICENSE`
@@ -117,7 +120,7 @@ Each generated package includes:
 Required in `.env`:
 - Choose one LLM auth mode:
   - OpenAI API: `GM_LLM_PROVIDER=openai` + `OPENAI_API_KEY=...`
-  - ChatGPT Codex: `GM_LLM_PROVIDER=codex_chatgpt` + `codex login`
+  - ChatGPT Codex: `GM_LLM_PROVIDER=codex_chatgpt` + bundled `codex login`
 
 Optional:
 - `DEEPGRAM_API_KEY`

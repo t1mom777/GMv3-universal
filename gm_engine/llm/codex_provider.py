@@ -1,10 +1,44 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+
+
+def _resolved_codex_bin(preferred: str | None = None) -> str:
+    p = str(preferred or "").strip()
+    if p and p != "codex":
+        return p
+
+    env_bin = str(os.environ.get("GM_CODEX_BIN") or "").strip()
+    if env_bin:
+        return env_bin
+
+    exe_dir = Path(sys.executable).resolve().parent
+    ext = ".exe" if os.name == "nt" else ""
+    candidates = [
+        exe_dir / "codex" / f"codex{ext}",
+        exe_dir.parent / "app" / "codex" / f"codex{ext}",
+    ]
+    for c in candidates:
+        if c.exists():
+            return str(c)
+    return "codex"
+
+
+def _codex_env(codex_bin: str) -> dict[str, str]:
+    env = dict(os.environ)
+    bin_path = Path(codex_bin)
+    path_dir = bin_path.parent.parent / "path"
+    if path_dir.exists():
+        sep = ";" if os.name == "nt" else ":"
+        cur = env.get("PATH", "")
+        env["PATH"] = f"{path_dir}{sep}{cur}" if cur else str(path_dir)
+    return env
 
 
 @dataclass
@@ -16,18 +50,20 @@ class CodexChatGPTLLM:
     """
 
     model: str = "gpt-5"
-    codex_bin: str = "codex"
+    codex_bin: str = ""
     timeout_secs: float = 120.0
 
     @classmethod
-    def login_status(cls, *, codex_bin: str = "codex") -> tuple[bool, str]:
+    def login_status(cls, *, codex_bin: str = "") -> tuple[bool, str]:
+        chosen_bin = _resolved_codex_bin(codex_bin)
         try:
             out = subprocess.run(
-                [codex_bin, "login", "status"],
+                [chosen_bin, "login", "status"],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=8.0,
+                env=_codex_env(chosen_bin),
             )
         except Exception as e:
             return (False, f"codex login status failed: {e}")
@@ -44,6 +80,7 @@ class CodexChatGPTLLM:
         return await asyncio.to_thread(self._complete_blocking, system=system, user=user)
 
     def _complete_blocking(self, *, system: str, user: str) -> str:
+        chosen_bin = _resolved_codex_bin(self.codex_bin)
         prompt = (
             "You are the LLM backend for a tabletop game master.\n"
             "Return only the answer text.\n\n"
@@ -54,7 +91,7 @@ class CodexChatGPTLLM:
             out_path = Path(tf.name)
         try:
             cmd = [
-                self.codex_bin,
+                chosen_bin,
                 "exec",
                 "--skip-git-repo-check",
                 "--sandbox",
@@ -75,6 +112,7 @@ class CodexChatGPTLLM:
                 capture_output=True,
                 text=True,
                 timeout=float(self.timeout_secs),
+                env=_codex_env(chosen_bin),
             )
             if proc.returncode != 0:
                 err = (proc.stderr or proc.stdout or "").strip()
