@@ -384,183 +384,234 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
     )
     _write_text(pkg_dir / "install.sh", install_sh)
 
-    run_bat = textwrap.dedent(
-        """\
+    windows_launcher_bat = textwrap.dedent(
+        r"""\
         @echo off
-        setlocal
+        setlocal EnableExtensions EnableDelayedExpansion
         cd /d "%~dp0"
-        if not exist ".env" (
-          copy /Y ".env.example" ".env" >nul
-          echo Created .env from template. Fill API keys and rerun.
-        )
+
+        title GMv3 Pro Launcher
+        for /f %%e in ('echo prompt $E ^| cmd') do set "ESC=%%e"
+        set "C_OK=!ESC![92m"
+        set "C_WARN=!ESC![93m"
+        set "C_INFO=!ESC![96m"
+        set "C_TITLE=!ESC![95m"
+        set "C_RESET=!ESC![0m"
+
+        set "APP_EXE=app\GMv3Server.exe"
+        set "ENV_FILE=.env"
+        set "ENV_TEMPLATE=.env.example"
         set "CODEX_HOME=%~dp0.codex-home"
+        set "CODEX_BIN=%~dp0app\codex\codex.exe"
+        set "CODEX_PATH=%~dp0app\path"
+
+        if exist "%CODEX_PATH%" set "PATH=%CODEX_PATH%;%PATH%"
         if not exist "%CODEX_HOME%" mkdir "%CODEX_HOME%" >nul 2>&1
-        set "GM_CODEX_BIN=%~dp0app\\codex\\codex.exe"
-        if exist "%~dp0app\\path" set "PATH=%~dp0app\\path;%PATH%"
-        if not exist "app\\GMv3Server.exe" (
-          echo ERROR: app\\GMv3Server.exe was not found.
+        set "GM_CODEX_BIN=%CODEX_BIN%"
+
+        if not exist "%APP_EXE%" (
+          call :print_error "Missing %APP_EXE%. Re-extract this package and try again."
           pause
           endlocal & exit /b 1
         )
-        "app\\GMv3Server.exe" --mode voice-ws
-        set EXIT_CODE=%ERRORLEVEL%
-        if not "%EXIT_CODE%"=="0" (
-          echo.
-          echo Server exited with code %EXIT_CODE%.
-          pause
-        )
-        endlocal & exit /b %EXIT_CODE%
-        """
-    )
-    _write_text(pkg_dir / "run.bat", run_bat)
 
-    install_bat = textwrap.dedent(
-        """\
-        @echo off
-        setlocal
-        cd /d "%~dp0"
-        echo Starting GMv3 Pro Windows installer...
-        powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
+        if /I "%~1"=="--run" goto run_server
+        if /I "%~1"=="--setup" goto setup_config
+        if /I "%~1"=="--login" goto codex_login
+        if /I "%~1"=="--env" goto edit_env
+
+        if not exist "%ENV_FILE%" (
+          call :print_info "First-time setup detected. Let's configure your app."
+          call :setup_config
+          if errorlevel 1 (
+            call :print_error "Setup did not complete."
+            pause
+            endlocal & exit /b 1
+          )
+        )
+
+        :main_menu
+        cls
+        call :print_banner
+        echo !C_INFO!1^) Start GMv3 Pro!C_RESET!
+        echo !C_INFO!2^) Setup / Change configuration!C_RESET!
+        echo !C_INFO!3^) ChatGPT Login ^(Codex^)!C_RESET!
+        echo !C_INFO!4^) Open .env in Notepad!C_RESET!
+        echo !C_INFO!5^) Exit!C_RESET!
+        echo.
+        set /p CHOICE=Choose [1-5]: 
+
+        if "%CHOICE%"=="1" goto run_server
+        if "%CHOICE%"=="2" goto setup_config
+        if "%CHOICE%"=="3" goto codex_login
+        if "%CHOICE%"=="4" goto edit_env
+        if "%CHOICE%"=="5" goto done
+
+        call :print_warn "Invalid option. Please choose 1-5."
+        timeout /t 1 >nul
+        goto main_menu
+
+        :run_server
+        if not exist "%ENV_FILE%" (
+          call :setup_config
+          if errorlevel 1 goto main_menu
+        )
+        call :print_info "Starting GMv3 server..."
+        "%APP_EXE%" --mode voice-ws
         set EXIT_CODE=%ERRORLEVEL%
         if not "%EXIT_CODE%"=="0" (
-          echo.
-          echo Installer failed with code %EXIT_CODE%.
-          echo If needed, right-click install.ps1 and run it with PowerShell.
+          call :print_warn "Server exited with code %EXIT_CODE%."
           pause
-          endlocal & exit /b %EXIT_CODE%
         )
+        if /I "%~1"=="--run" endlocal & exit /b %EXIT_CODE%
+        goto main_menu
+
+        :setup_config
+        call :ensure_env
+        if errorlevel 1 exit /b 1
+
+        call :print_info "Choose LLM auth mode:"
+        echo   1^) OpenAI API key ^(GM_LLM_PROVIDER=openai^)
+        echo   2^) ChatGPT Codex login ^(GM_LLM_PROVIDER=codex_chatgpt^)
+        set /p AUTH_CHOICE=Select [1/2] (default 1): 
+        set "AUTH_MODE=openai"
+        if "%AUTH_CHOICE%"=="2" set "AUTH_MODE=codex_chatgpt"
+
+        powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "& { $path='%ENV_FILE%'; $key='GM_LLM_PROVIDER'; $value='%AUTH_MODE%'; $lines=if (Test-Path $path) { Get-Content -Path $path } else { @() }; $re='^'+[regex]::Escape($key)+'='; $done=$false; for($i=0;$i -lt $lines.Count;$i++){ if($lines[$i] -match $re){ $lines[$i] = "$key=$value"; $done=$true } }; if(-not $done){ $lines += "$key=$value" }; Set-Content -Path $path -Value $lines -Encoding UTF8 }"
+        if errorlevel 1 (
+          call :print_error "Failed to update %ENV_FILE%."
+          exit /b 1
+        )
+
+        if /I "%AUTH_MODE%"=="openai" (
+          call :print_ok "OpenAI mode selected. Set OPENAI_API_KEY in %ENV_FILE%."
+        ) else (
+          call :print_ok "ChatGPT Codex mode selected."
+          echo Bundled Codex binary: %CODEX_BIN%
+          echo Auth storage ^(CODEX_HOME^): %CODEX_HOME%
+        )
+
+        set /p OPEN_ENV=Open %ENV_FILE% in Notepad now? [Y/n]: 
+        if "%OPEN_ENV%"=="" set "OPEN_ENV=Y"
+        if /I "%OPEN_ENV%"=="Y" call :edit_env_inline
+        if /I "%OPEN_ENV%"=="YES" call :edit_env_inline
+
+        if /I "%AUTH_MODE%"=="codex_chatgpt" (
+          set /p RUN_LOGIN=Run ChatGPT login now (opens browser)? [Y/n]: 
+          if "%RUN_LOGIN%"=="" set "RUN_LOGIN=Y"
+          if /I "%RUN_LOGIN%"=="Y" call :codex_login
+          if /I "%RUN_LOGIN%"=="YES" call :codex_login
+        )
+
+        if /I "%~1"=="--setup" endlocal & exit /b 0
+        goto main_menu
+
+        :edit_env
+        call :ensure_env
+        if errorlevel 1 (
+          if /I "%~1"=="--env" endlocal & exit /b 1
+          goto main_menu
+        )
+        notepad "%ENV_FILE%"
+        if /I "%~1"=="--env" endlocal & exit /b 0
+        goto main_menu
+
+        :edit_env_inline
+        notepad "%ENV_FILE%"
+        exit /b 0
+
+        :codex_login
+        if not exist "%CODEX_BIN%" (
+          call :print_error "Bundled Codex binary not found: %CODEX_BIN%"
+          if /I "%~1"=="--login" endlocal & exit /b 1
+          pause
+          goto main_menu
+        )
+        call :print_info "Opening ChatGPT login with Codex..."
+        "%CODEX_BIN%" login
+        set LOGIN_EXIT=%ERRORLEVEL%
+        if not "%LOGIN_EXIT%"=="0" (
+          call :print_warn "ChatGPT login failed with code %LOGIN_EXIT%."
+          if /I "%~1"=="--login" endlocal & exit /b %LOGIN_EXIT%
+          pause
+          goto main_menu
+        )
+        call :print_ok "ChatGPT login completed."
+        if /I "%~1"=="--login" endlocal & exit /b 0
+        goto main_menu
+
+        :ensure_env
+        if not exist "%ENV_FILE%" (
+          if not exist "%ENV_TEMPLATE%" (
+            call :print_error "Missing %ENV_TEMPLATE% template."
+            exit /b 1
+          )
+          copy /Y "%ENV_TEMPLATE%" "%ENV_FILE%" >nul
+        )
+        exit /b 0
+
+        :print_banner
+        echo !C_TITLE!=============================================================!C_RESET!
+        echo !C_TITLE!   ____ __  ____   __    ___     ____            __          !C_RESET!
+        echo !C_TITLE!  / ___/  |/  / | / /   /   |   / __ \_________  / /___  ____ !C_RESET!
+        echo !C_TITLE! / /  / /|_/ /  |/ /   / /| |  / /_/ / ___/ __ \/ / __ \/ __ \!C_RESET!
+        echo !C_TITLE!/ /__/ /  / / /|  /   / ___ | / ____/ /  / /_/ / / /_/ / / / /!C_RESET!
+        echo !C_TITLE!\___/_/  /_/_/ |_/   /_/  |_|/_/   /_/   \____/_/\____/_/ /_/ !C_RESET!
+        echo !C_TITLE!=============================================================!C_RESET!
         echo.
-        echo Installer finished.
-        pause
+        exit /b 0
+
+        :print_info
+        echo !C_INFO![INFO]!C_RESET! %~1
+        exit /b 0
+
+        :print_ok
+        echo !C_OK![OK]!C_RESET! %~1
+        exit /b 0
+
+        :print_warn
+        echo !C_WARN![WARN]!C_RESET! %~1
+        exit /b 0
+
+        :print_error
+        echo !C_WARN![ERROR]!C_RESET! %~1
+        exit /b 0
+
+        :done
         endlocal & exit /b 0
         """
     )
-    _write_text(pkg_dir / "install.bat", install_bat)
+    _write_text(pkg_dir / "START_GMv3Pro.bat", windows_launcher_bat)
 
-    install_ps1 = textwrap.dedent(
-        """\
-        $ErrorActionPreference = "Stop"
-        $src = Split-Path -Parent $MyInvocation.MyCommand.Path
-        $defaultTarget = Join-Path $env:USERPROFILE "GMv3Pro"
-        $target = $defaultTarget
+    windows_wrappers_dir = pkg_dir / "_advanced_windows"
+    windows_wrappers_dir.mkdir(parents=True, exist_ok=True)
 
-        Write-Host "GMv3 Pro first-time installer (Windows)"
-        Write-Host "Default install path: $defaultTarget"
-        $inputTarget = Read-Host "Install path (press Enter for default)"
-        if (-not [string]::IsNullOrWhiteSpace($inputTarget)) {
-          $target = $inputTarget.Trim()
-        }
-
-        New-Item -ItemType Directory -Force -Path $target | Out-Null
-        Copy-Item -Recurse -Force (Join-Path $src "app") $target
-        Copy-Item -Force (Join-Path $src ".env.example") $target
-        Copy-Item -Force (Join-Path $src "run.bat") $target
-        Copy-Item -Force (Join-Path $src "install.ps1") $target
-        if (Test-Path (Join-Path $src "install.bat")) {
-          Copy-Item -Force (Join-Path $src "install.bat") $target
-        }
-
-        $envPath = Join-Path $target ".env"
-        if (-not (Test-Path $envPath)) {
-          Copy-Item -Force (Join-Path $target ".env.example") $envPath
-        }
-
-        function Set-EnvValue {
-          param(
-            [string]$Path,
-            [string]$Key,
-            [string]$Value
-          )
-          $lines = @()
-          if (Test-Path $Path) {
-            $lines = Get-Content -Path $Path
-          }
-          $prefix = [regex]::Escape($Key) + "="
-          $found = $false
-          for ($i = 0; $i -lt $lines.Count; $i++) {
-            if ($lines[$i] -match "^$prefix") {
-              $lines[$i] = "$Key=$Value"
-              $found = $true
-            }
-          }
-          if (-not $found) {
-            $lines += "$Key=$Value"
-          }
-          Set-Content -Path $Path -Value $lines -Encoding UTF8
-        }
-
-        Write-Host ""
-        Write-Host "Choose LLM auth mode:"
-        Write-Host "  1) OpenAI API key (GM_LLM_PROVIDER=openai)"
-        Write-Host "  2) ChatGPT Codex login (GM_LLM_PROVIDER=codex_chatgpt)"
-        $authChoice = Read-Host "Select [1/2] (default 1)"
-        $authMode = "openai"
-        if ($authChoice -eq "2") {
-          $authMode = "codex_chatgpt"
-        }
-        Set-EnvValue -Path $envPath -Key "GM_LLM_PROVIDER" -Value $authMode
-
-        Write-Host ""
-        $codexBin = Join-Path $target "app\\codex\\codex.exe"
-        $codexPathDir = Join-Path $target "app\\path"
-        $codexHome = Join-Path $target ".codex-home"
-        New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
-        $env:CODEX_HOME = $codexHome
-        if (Test-Path $codexPathDir) {
-          $env:PATH = "$codexPathDir;$env:PATH"
-        }
-        if (Test-Path $codexBin) {
-          $env:GM_CODEX_BIN = $codexBin
-        }
-
-        Write-Host ""
-        if ($authMode -eq "openai") {
-          Write-Host "Set OPENAI_API_KEY in: $envPath"
-        } else {
-          Write-Host "ChatGPT Codex auth mode selected."
-          Write-Host "Bundled Codex binary: $codexBin"
-          Write-Host "Auth storage (CODEX_HOME): $codexHome"
-        }
-        $openEnv = Read-Host "Open .env in Notepad now? [Y/n]"
-        if (
-          [string]::IsNullOrWhiteSpace($openEnv) -or
-          $openEnv.Trim().ToLower() -eq "y" -or
-          $openEnv.Trim().ToLower() -eq "yes"
-        ) {
-          notepad $envPath
-        }
-
-        if ($authMode -eq "codex_chatgpt") {
-          $runLogin = Read-Host "Run ChatGPT login now (opens browser)? [Y/n]"
-          $runLoginNorm = if ([string]::IsNullOrWhiteSpace($runLogin)) { "y" } else { $runLogin.Trim().ToLower() }
-          if ($runLoginNorm -eq "y" -or $runLoginNorm -eq "yes") {
-            if (Test-Path $codexBin) {
-              & $codexBin login
-              if ($LASTEXITCODE -ne 0) {
-                Write-Warning "Codex login failed. Retry later with: $codexBin login"
-              }
-            } else {
-              Write-Warning "Bundled Codex binary not found: $codexBin"
-            }
-          }
-        }
-
-        Write-Host ""
-        Write-Host "Installed to: $target"
-        Write-Host "Next steps:"
-        Write-Host "  1) Review .env and add provider keys"
-        Write-Host "  2) Start server: .\\run.bat"
-        Write-Host "  3) Open: http://localhost:8000"
-        Write-Host "  4) Re-run setup later: .\\install.bat"
-
-        $startNow = Read-Host "Start now? [y/N]"
-        if (-not [string]::IsNullOrWhiteSpace($startNow) -and $startNow.Trim().ToLower() -eq "y") {
-          Set-Location $target
-          & .\run.bat
-        }
+    run_bat = textwrap.dedent(
+        r"""\
+        @echo off
+        cd /d "%~dp0\.."
+        call "%~dp0\..\START_GMv3Pro.bat" --run
         """
     )
-    _write_text(pkg_dir / "install.ps1", install_ps1)
+    _write_text(windows_wrappers_dir / "run.bat", run_bat)
+
+    install_bat = textwrap.dedent(
+        r"""\
+        @echo off
+        cd /d "%~dp0\.."
+        call "%~dp0\..\START_GMv3Pro.bat" --setup
+        """
+    )
+    _write_text(windows_wrappers_dir / "install.bat", install_bat)
+
+    chatgpt_login_bat = textwrap.dedent(
+        r"""\
+        @echo off
+        cd /d "%~dp0\.."
+        call "%~dp0\..\START_GMv3Pro.bat" --login
+        """
+    )
+    _write_text(windows_wrappers_dir / "chatgpt-login.bat", chatgpt_login_bat)
 
     readme = textwrap.dedent(
         f"""\
@@ -578,21 +629,22 @@ def _build_package(stamp: str, *, output_root: Path) -> tuple[Path, list[Path]]:
         ./install.sh
         ```
 
-        Windows (guided):
-        - Double-click `install.bat`.
-        - If needed, run `install.ps1`.
+        Windows (single-file launcher):
+        - Double-click `START_GMv3Pro.bat`.
+        - First launch guides auth mode and `.env` setup with a colorful ASCII menu.
 
-        The installer guides you through:
-        - install location
-        - `.env` creation
-        - auth mode selection
-        - optional browser-based ChatGPT login (bundled Codex CLI)
-        - optional immediate launch
-        - final localhost URL (`http://localhost:8000`)
+        The Windows launcher includes:
+        - Start server
+        - Setup/change auth mode
+        - Open `.env`
+        - ChatGPT login (bundled Codex CLI)
+        - Colorized output + ASCII launcher banner
 
         Next launches:
         - Linux/macOS: `./run.sh`
-        - Windows: double-click `run.bat`
+        - Windows: double-click `START_GMv3Pro.bat`
+
+        Advanced wrappers (for power users) are available under `_advanced_windows/`.
 
         ## Required
         - Choose one LLM auth mode:

@@ -37,6 +37,8 @@ Notes:
 Download from the latest release:
 `https://github.com/t1mom777/GMv3-universal/releases/latest`
 
+Release distributions are also mirrored in git under the `release-distributions` branch (folder per version tag).
+
 All packaged installers are **guided first-run scripts**: they install files, create `.env`, prompt for auth mode, and print final localhost launch instructions.
 Packages are self-contained (app runtime + dependencies + bundled Codex CLI), so installation itself does not download extra frameworks.
 
@@ -100,9 +102,10 @@ Windows (x64, GUI / File Explorer):
 2. Right-click ZIP -> **Extract All...**.
 3. Open extracted folder `GMv3Pro-windows-x64-<version>`.
 4. Copy `.env.example` to `.env`, then edit `.env` in Notepad.
-5. Double-click `install.bat` and follow prompts.
-6. Double-click `run.bat` to start.
-7. Open `http://localhost:8000` (or URL printed in terminal).
+5. Double-click `START_GMv3Pro.bat` (easy-to-find main launcher).
+6. First launch runs a guided, colorful terminal setup (ASCII banner + auth mode + `.env` editing + optional ChatGPT login).
+7. Use the same `START_GMv3Pro.bat` menu for run/setup/login/env changes.
+8. Open `http://localhost:8000` (or URL printed in terminal).
 
 ## 🤝 Need Help?
 Feel free to contact me through GitHub Issues if you want help installing and setting up the app for your campaign. I can install and set it up for you, and help you get from download to first playable session.
@@ -112,7 +115,7 @@ Each generated package includes:
 - Compiled app binary (`app/GMv3Server` / `app/GMv3Server.exe`)
 - Bundled Codex CLI native binary (`app/codex/...`) + bundled `rg` helper (`app/path/...`)
 - `.env.example`
-- Install/run scripts (`install.sh` / `run.sh`, plus Windows scripts)
+- Install/run scripts (`install.sh` / `run.sh`, plus easy-to-find Windows launcher `START_GMv3Pro.bat`)
 - `LICENSE`
 - `README.md`
 
