@@ -37,6 +37,8 @@ Notes:
 Download from the latest release:
 `https://github.com/t1mom777/GMv3-universal/releases/latest`
 
+Release distributions are also mirrored in git under the `release-distributions` branch (folder per version tag).
+
 All packaged installers are **guided first-run scripts**: they install files, create `.env`, prompt for auth mode, and print final localhost launch instructions.
 Packages are self-contained (app runtime + dependencies + bundled Codex CLI), so installation itself does not download extra frameworks.
 

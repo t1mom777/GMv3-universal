@@ -165,6 +165,56 @@ jobs:
             --checksums "release-bundle/SHA256SUMS.txt" \
             --out "release-bundle/RELEASE_NOTES.md"
 
+      - name: Upload distributions to git branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="release-distributions"
+          VERSION="${{ needs.resolve.outputs.version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin "$BRANCH" || true
+          rm -rf _dist_branch
+          if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+            git worktree add --detach _dist_branch "origin/$BRANCH"
+          else
+            git worktree add --detach _dist_branch
+            (
+              cd _dist_branch
+              git checkout --orphan "$BRANCH"
+              rm -rf .
+              echo "# GMv3 Pro Release Distributions" > README.md
+              git add README.md
+              git commit -m "Initialize distribution branch"
+            )
+          fi
+
+          mkdir -p "_dist_branch/$VERSION"
+          cp -f release-bundle/*.zip "_dist_branch/$VERSION/"
+          cp -f release-bundle/*.tar.gz "_dist_branch/$VERSION/"
+          cp -f release-bundle/SHA256SUMS.txt "_dist_branch/$VERSION/"
+          cp -f release-bundle/RELEASE_NOTES.md "_dist_branch/$VERSION/"
+
+          (
+            cd _dist_branch
+            if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+              git checkout -B "$BRANCH" "origin/$BRANCH"
+            else
+              git checkout "$BRANCH"
+            fi
+            git add "$VERSION"
+            if git diff --cached --quiet; then
+              echo "No distribution changes to commit."
+            else
+              git commit -m "Upload distributions for $VERSION"
+              git push origin "$BRANCH"
+            fi
+          )
+
+          git worktree remove _dist_branch --force
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
